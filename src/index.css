@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-heat: heat 2s infinite ease-in-out;
+
+  @keyframes heat {
+    0%,
+    100% {
+      opacity: 1;
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.8;
+      filter: brightness(1.2);
+    }
+  }
+}
+
+/* Base styles to make it look like a pro app immediately */
+body {
+  @apply bg-black text-white antialiased;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
