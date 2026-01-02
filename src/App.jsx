@@ -20,8 +20,85 @@ import {
   Download,
   Upload,
   Zap,
+  Info,
+  CheckCircle2,
 } from "lucide-react";
 
+// --- NEW SUB-COMPONENT: ONBOARDING ---
+const Onboarding = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const slides = [
+    {
+      title: "THE VISION",
+      desc: "SKIPGYM is for the 1%. No fluff, no social feeds. Just your raw progress recorded locally.",
+      icon: <Info size={40} className="text-white" />,
+    },
+    {
+      title: "BUILD ROUTINES",
+      desc: "Tap the '+' icon to name your grind. In the 'Lab', use the steppers to log your sets with precision.",
+      icon: <Plus size={40} className="text-white" />,
+    },
+    {
+      title: "OFFLINE FIRST",
+      desc: "No data? No problem. SKIPGYM lives in your phone's memory. Add to Home Screen for the full experience.",
+      icon: <Zap size={40} className="text-orange-500" />,
+    },
+    {
+      title: "MASTER CONTROL",
+      desc: "Privacy is absolute. If you ever want a clean slate, the Red Trash icon clears all local data instantly [cite: 2026-01-01].",
+      icon: <Trash2 size={40} className="text-red-500" />,
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[600] bg-black p-8 flex flex-col justify-between"
+    >
+      <div className="mt-12">
+        <div className="flex gap-2 mb-12">
+          {slides.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-all ${
+                i <= step ? "bg-white" : "bg-zinc-800"
+              }`}
+            />
+          ))}
+        </div>
+        <motion.div
+          key={step}
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="space-y-6"
+        >
+          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800">
+            {slides[step].icon}
+          </div>
+          <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">
+            {slides[step].title}
+          </h2>
+          <p className="text-zinc-400 text-xl leading-relaxed font-medium">
+            {slides[step].desc}
+          </p>
+        </motion.div>
+      </div>
+      <button
+        onClick={() =>
+          step < slides.length - 1 ? setStep(step + 1) : onComplete()
+        }
+        className="w-full py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2"
+      >
+        {step === slides.length - 1 ? "Enter the Lab" : "Next"}{" "}
+        <ChevronRight size={18} />
+      </button>
+    </motion.div>
+  );
+};
+
+// --- UPDATED ACTIVITY CALENDAR ---
 const ActivityCalendar = ({ history = {} }) => {
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
@@ -74,10 +151,11 @@ function WorkoutApp() {
     importData,
   } = useWorkout();
 
-  const [hasLaunched, setHasLaunched] = useState(
-    () => localStorage.getItem("skip-gym-launched") === "true"
-  );
+  // --- VIEW STATE LOGIC ---
+  const [showLanding, setShowLanding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
+
   const [rest, setRest] = useState(60);
   const [isResting, setIsResting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -117,8 +195,10 @@ function WorkoutApp() {
       }
       if (dailyBests.length === 3) break;
     }
-    if (dailyBests.length < 3) return false;
-    return dailyBests.every((w) => w <= dailyBests[dailyBests.length - 1]);
+    return (
+      dailyBests.length >= 3 &&
+      dailyBests.every((w) => w <= dailyBests[dailyBests.length - 1])
+    );
   }, [exHistory]);
 
   const prList = useMemo(() => {
@@ -141,17 +221,22 @@ function WorkoutApp() {
 
   useEffect(() => {
     let t;
-    if (isResting && timeLeft > 0) {
+    if (isResting && timeLeft > 0)
       t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    } else if (timeLeft <= 0 && isResting) {
-      setIsResting(false);
-    }
+    else if (timeLeft <= 0 && isResting) setIsResting(false);
     return () => clearInterval(t);
   }, [isResting, timeLeft]);
 
+  // --- HANDLERS ---
   const handleStart = () => {
-    localStorage.setItem("skip-gym-launched", "true");
-    setHasLaunched(true);
+    const hasSeen = localStorage.getItem("skip-gym-onboarding-done");
+    setShowLanding(false);
+    if (!hasSeen) setShowOnboarding(true);
+  };
+
+  const finishOnboarding = () => {
+    localStorage.setItem("skip-gym-onboarding-done", "true");
+    setShowOnboarding(false);
   };
 
   const handleNext = () => {
@@ -191,7 +276,9 @@ function WorkoutApp() {
   return (
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center overflow-x-hidden pb-32">
       <AnimatePresence>
-        {!hasLaunched && <LandingScreen onGetStarted={handleStart} />}
+        {showLanding && <LandingScreen onGetStarted={handleStart} />}
+        {showOnboarding && <Onboarding onComplete={finishOnboarding} />}
+
         {isResting && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -244,8 +331,11 @@ function WorkoutApp() {
             {rest > 0 ? `${rest}s` : "OFF"}
           </button>
           <button
-            onClick={clearAllData}
-            className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-red-900 border border-zinc-800"
+            onClick={() => {
+              if (window.confirm("Clear all data? [cite: 2026-01-01]"))
+                clearAllData();
+            }}
+            className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-red-900 border border-zinc-800 active:bg-red-500/10"
           >
             <Trash2 size={18} />
           </button>
@@ -282,7 +372,6 @@ function WorkoutApp() {
               </button>
             ))}
           </div>
-
           <main>
             {routine ? (
               <motion.div
@@ -318,6 +407,7 @@ function WorkoutApp() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* KG INPUT WITH NUMERIC KEYPAD & STEPPER */}
                   <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                     <button
                       onClick={() =>
@@ -328,9 +418,13 @@ function WorkoutApp() {
                       <Minus size={20} />
                     </button>
                     <div className="text-center">
-                      <span className="text-3xl font-black tabular-nums">
-                        {weight}
-                      </span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                      />
                       <span className="block text-[8px] font-black text-zinc-600 uppercase">
                         KG
                       </span>
@@ -342,6 +436,7 @@ function WorkoutApp() {
                       <Plus size={20} />
                     </button>
                   </div>
+                  {/* REPS INPUT WITH NUMERIC KEYPAD & STEPPER */}
                   <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                     <button
                       onClick={() =>
@@ -352,9 +447,13 @@ function WorkoutApp() {
                       <Minus size={20} />
                     </button>
                     <div className="text-center">
-                      <span className="text-3xl font-black tabular-nums">
-                        {reps}
-                      </span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={reps}
+                        onChange={(e) => setReps(e.target.value)}
+                        className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                      />
                       <span className="block text-[8px] font-black text-zinc-600 uppercase">
                         Reps
                       </span>
@@ -392,7 +491,7 @@ function WorkoutApp() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm"
         >
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2 italic">
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">
             The Lab
           </h2>
           <ActivityCalendar history={history} />
@@ -484,7 +583,7 @@ function WorkoutApp() {
               </label>
             </div>
           </div>
-          {/* Digital Signature / Watermark */}
+
           <div className="mt-16 pb-8 text-center opacity-20">
             <p className="text-[8px] font-black uppercase tracking-[0.4em]">
               Property of SKIPGYM
