@@ -422,6 +422,12 @@ function WorkoutApp() {
                         type="number"
                         inputMode="decimal"
                         value={weight}
+                        // This is the "Numbers Only" filter
+                        onKeyDown={(e) => {
+                          if (["e", "E", "+", "-"].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         onChange={(e) => setWeight(e.target.value)}
                         className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
                       />
