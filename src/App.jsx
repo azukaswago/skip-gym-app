@@ -22,114 +22,116 @@ import {
   Zap,
   Info,
   CheckCircle2,
+  ChevronLeft,
 } from "lucide-react";
 
-// --- NEW SUB-COMPONENT: ONBOARDING ---
-const Onboarding = ({ onComplete }) => {
-  const [step, setStep] = useState(0);
-  const slides = [
-    {
-      title: "THE VISION",
-      desc: "SKIPGYM is for the 1%. No fluff, no social feeds. Just your raw progress recorded locally.",
-      icon: <Info size={40} className="text-white" />,
-    },
-    {
-      title: "BUILD ROUTINES",
-      desc: "Tap the '+' icon to name your grind. In the 'Lab', use the steppers to log your sets with precision.",
-      icon: <Plus size={40} className="text-white" />,
-    },
-    {
-      title: "OFFLINE FIRST",
-      desc: "No data? No problem. SKIPGYM lives in your phone's memory. Add to Home Screen for the full experience.",
-      icon: <Zap size={40} className="text-orange-500" />,
-    },
-    {
-      title: "MASTER CONTROL",
-      desc: "Privacy is absolute. If you ever want a clean slate, the Red Trash icon clears all local data instantly [cite: 2026-01-01].",
-      icon: <Trash2 size={40} className="text-red-500" />,
-    },
+// --- INFINITE CALENDAR COMPONENT (2026-2046) ---
+const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
+  const [viewDate, setViewDate] = useState(new Date());
+  const years = Array.from({ length: 21 }, (_, i) => 2026 + i);
+  const months = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
   ];
 
+  const daysInMonth = new Date(
+    viewDate.getFullYear(),
+    viewDate.getMonth() + 1,
+    0
+  ).getDate();
+  const firstDay = new Date(
+    viewDate.getFullYear(),
+    viewDate.getMonth(),
+    1
+  ).getDay();
+
+  const isWorkDay = (day) => {
+    const dStr = `${viewDate.getFullYear()}-${String(
+      viewDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return Object.values(history).some((h) => h.date?.startsWith(dStr));
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[600] bg-black p-8 flex flex-col justify-between"
-    >
-      <div className="mt-12">
-        <div className="flex gap-2 mb-12">
-          {slides.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 flex-1 rounded-full transition-all ${
-                i <= step ? "bg-white" : "bg-zinc-800"
+    <div className="w-full bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mt-4">
+      <div className="flex justify-between items-center mb-6 px-2">
+        <select
+          value={viewDate.getFullYear()}
+          onChange={(e) =>
+            setViewDate(new Date(parseInt(e.target.value), viewDate.getMonth()))
+          }
+          className="bg-transparent text-orange-500 font-black italic outline-none text-lg"
+        >
+          {years.map((y) => (
+            <option key={y} value={y} className="bg-black">
+              {y}
+            </option>
+          ))}
+        </select>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-[200px]">
+          {months.map((m, i) => (
+            <button
+              key={m}
+              onClick={() => setViewDate(new Date(viewDate.getFullYear(), i))}
+              className={`text-[10px] font-black px-2 py-1 rounded-md transition-all ${
+                viewDate.getMonth() === i
+                  ? "bg-orange-500 text-black"
+                  : "text-zinc-600"
               }`}
-            />
+            >
+              {m}
+            </button>
           ))}
         </div>
-        <motion.div
-          key={step}
-          initial={{ x: 20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="space-y-6"
-        >
-          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800">
-            {slides[step].icon}
-          </div>
-          <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">
-            {slides[step].title}
-          </h2>
-          <p className="text-zinc-400 text-xl leading-relaxed font-medium">
-            {slides[step].desc}
-          </p>
-        </motion.div>
       </div>
-      <button
-        onClick={() =>
-          step < slides.length - 1 ? setStep(step + 1) : onComplete()
-        }
-        className="w-full py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2"
-      >
-        {step === slides.length - 1 ? "Enter the Lab" : "Next"}{" "}
-        <ChevronRight size={18} />
-      </button>
-    </motion.div>
-  );
-};
 
-// --- UPDATED ACTIVITY CALENDAR ---
-const ActivityCalendar = ({ history = {} }) => {
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
-    return d;
-  });
-
-  return (
-    <div className="w-full bg-zinc-900/50 p-6 rounded-[2.5rem] border border-zinc-800 mt-6">
-      <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-6">
-        Activity Heatmap
-      </h3>
-      <div className="flex justify-between items-end h-16 gap-1.5">
-        {days.map((date, i) => {
-          const ds = date.toISOString().split("T")[0];
-          const active = Object.values(history).some((h) =>
-            h?.date?.startsWith(ds)
-          );
+      <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
+        {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+          <span
+            key={d}
+            className="text-[8px] font-black text-zinc-800 uppercase"
+          >
+            {d}
+          </span>
+        ))}
+        {Array(firstDay)
+          .fill(0)
+          .map((_, i) => (
+            <div key={i} />
+          ))}
+        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+          const active = isWorkDay(day);
+          const isSelected =
+            selectedDate?.getDate() === day &&
+            selectedDate?.getMonth() === viewDate.getMonth() &&
+            selectedDate?.getFullYear() === viewDate.getFullYear();
           return (
-            <div key={i} className="flex flex-col items-center gap-3 flex-1">
-              <div
-                className={`w-full rounded-full transition-all duration-700 ${
-                  active
-                    ? "bg-orange-500 h-10 shadow-[0_0_15px_rgba(249,115,22,0.3)]"
-                    : "bg-zinc-800 h-3"
-                }`}
-              />
-              <span className="text-[8px] font-black text-zinc-700 uppercase">
-                {date.toLocaleDateString("en-US", { weekday: "narrow" })}
-              </span>
-            </div>
+            <button
+              key={day}
+              onClick={() =>
+                onDateSelect(
+                  new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
+                )
+              }
+              className={`aspect-square rounded-full flex items-center justify-center text-[11px] font-black transition-all relative
+                ${active ? "text-white" : "text-zinc-700"}
+                ${isSelected ? "border-2 border-white" : ""}`}
+            >
+              {day}
+              {active && (
+                <div className="absolute bottom-1 w-1 h-1 bg-orange-500 rounded-full shadow-[0_0_8px_#f97316]" />
+              )}
+            </button>
           );
         })}
       </div>
@@ -151,16 +153,17 @@ function WorkoutApp() {
     importData,
   } = useWorkout();
 
-  // --- VIEW STATE LOGIC ---
   const [showLanding, setShowLanding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
+  const [selectedCalDate, setSelectedCalDate] = useState(new Date());
 
   const [rest, setRest] = useState(60);
   const [isResting, setIsResting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
-  const [weight, setWeight] = useState(0);
-  const [reps, setReps] = useState(0);
+
+  const [weight, setWeight] = useState("");
+  const [reps, setReps] = useState("");
   const [activeSet, setActiveSet] = useState(1);
 
   const days = [
@@ -177,6 +180,20 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
+  // Logic for "Last Session"
+  const lastSession = useMemo(() => {
+    const sorted = Object.values(history).sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+    return sorted.length > 0 ? sorted[0] : null;
+  }, [history]);
+
+  // Logic for Selected Day's details in Stats
+  const selectedDayLogs = useMemo(() => {
+    const dStr = selectedCalDate.toISOString().split("T")[0];
+    return Object.values(history).filter((h) => h.date?.startsWith(dStr));
+  }, [selectedCalDate, history]);
+
   const exHistory = useMemo(() => {
     if (!exercise?.name) return [];
     return Object.values(history)
@@ -184,37 +201,10 @@ function WorkoutApp() {
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [exercise, history]);
 
-  const plateau = useMemo(() => {
-    const dailyBests = [];
-    const seenDates = new Set();
-    for (let entry of exHistory) {
-      const d = entry.date.split("T")[0];
-      if (!seenDates.has(d)) {
-        dailyBests.push(entry.weight);
-        seenDates.add(d);
-      }
-      if (dailyBests.length === 3) break;
-    }
-    return (
-      dailyBests.length >= 3 &&
-      dailyBests.every((w) => w <= dailyBests[dailyBests.length - 1])
-    );
-  }, [exHistory]);
-
-  const prList = useMemo(() => {
-    const records = {};
-    Object.values(history).forEach((entry) => {
-      if (!records[entry.name] || entry.weight > records[entry.name].weight) {
-        records[entry.name] = entry;
-      }
-    });
-    return Object.values(records).sort((a, b) => a.name.localeCompare(b.name));
-  }, [history]);
-
   useEffect(() => {
     if (exercise) {
-      setWeight(exercise.weight || 0);
-      setReps(exercise.reps || 0);
+      setWeight(exercise.weight || "");
+      setReps(exercise.reps || "");
       setActiveSet(1);
     }
   }, [currentIndex, exercise, selectedDay]);
@@ -227,16 +217,10 @@ function WorkoutApp() {
     return () => clearInterval(t);
   }, [isResting, timeLeft]);
 
-  // --- HANDLERS ---
   const handleStart = () => {
     const hasSeen = localStorage.getItem("skip-gym-onboarding-done");
     setShowLanding(false);
     if (!hasSeen) setShowOnboarding(true);
-  };
-
-  const finishOnboarding = () => {
-    localStorage.setItem("skip-gym-onboarding-done", "true");
-    setShowOnboarding(false);
   };
 
   const handleNext = () => {
@@ -261,24 +245,18 @@ function WorkoutApp() {
     }
   };
 
-  const groups = useMemo(() => {
-    return Object.values(history).reduce((acc, curr) => {
-      const k = curr.date?.split("T")[0];
-      if (!k) return acc;
-      if (!acc[k]) acc[k] = [];
-      acc[k].push(curr);
-      return acc;
-    }, {});
-  }, [history]);
-
-  const dates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
-
   return (
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center overflow-x-hidden pb-32">
       <AnimatePresence>
         {showLanding && <LandingScreen onGetStarted={handleStart} />}
-        {showOnboarding && <Onboarding onComplete={finishOnboarding} />}
-
+        {showOnboarding && (
+          <Onboarding
+            onComplete={() => {
+              localStorage.setItem("skip-gym-onboarding-done", "true");
+              setShowOnboarding(false);
+            }}
+          />
+        )}
         {isResting && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -296,18 +274,6 @@ function WorkoutApp() {
               <SkipForward size={32} />
             </button>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {view === "create" && (
-          <CreatorScreen
-            onCancel={() => setView("train")}
-            onSave={(d) => {
-              saveRoutine(d.day, d);
-              setView("train");
-            }}
-          />
         )}
       </AnimatePresence>
 
@@ -332,7 +298,11 @@ function WorkoutApp() {
           </button>
           <button
             onClick={() => {
-              if (window.confirm("Clear all data? [cite: 2026-01-01]"))
+              if (
+                window.confirm(
+                  "Master Reset: Clear all data? [cite: 2026-01-01]"
+                )
+              )
                 clearAllData();
             }}
             className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-red-900 border border-zinc-800 active:bg-red-500/10"
@@ -372,122 +342,115 @@ function WorkoutApp() {
               </button>
             ))}
           </div>
-          <main>
-            {routine ? (
-              <motion.div
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                onDragEnd={(_, i) => {
-                  if (i.offset.x < -100) handleNext();
-                }}
-                className="w-full bg-zinc-900 border border-zinc-800 p-8 rounded-[3.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative"
-              >
-                <div>
-                  <div className="flex justify-between items-start">
-                    <h2 className="text-4xl font-black uppercase italic leading-tight truncate pr-4">
-                      {exercise?.name}
-                    </h2>
-                    <div className="bg-orange-500 text-black px-3 py-1 rounded-full font-black text-[10px] shrink-0">
-                      SET {activeSet}
-                    </div>
-                  </div>
-                  {plateau && (
-                    <div className="flex items-center gap-1 text-red-500 mt-2 font-black text-[9px] uppercase">
-                      <AlertTriangle size={10} /> Plateau Warning
-                    </div>
-                  )}
-                  <div className="mt-4 flex items-center gap-2 bg-black/40 p-2.5 px-4 rounded-full border border-zinc-800/50 w-fit">
-                    <History size={12} className="text-orange-500/50" />
-                    <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">
-                      {exHistory[0]
-                        ? `Prev: ${exHistory[0].weight}kg x ${exHistory[0].reps}`
-                        : "New Move"}
-                    </span>
+          {routine ? (
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={(_, i) => {
+                if (i.offset.x < -100) handleNext();
+              }}
+              className="w-full bg-zinc-900 border border-zinc-800 p-8 rounded-[3.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative"
+            >
+              <div>
+                <div className="flex justify-between items-start">
+                  <h2 className="text-4xl font-black uppercase italic leading-tight truncate pr-4">
+                    {exercise?.name}
+                  </h2>
+                  <div className="bg-orange-500 text-black px-3 py-1 rounded-full font-black text-[10px] shrink-0">
+                    SET {activeSet}
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  {/* KG INPUT WITH NUMERIC KEYPAD & STEPPER */}
-                  <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
-                    <button
-                      onClick={() =>
-                        setWeight((w) => Math.max(0, parseFloat(w) - 2.5))
-                      }
-                      className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
-                    >
-                      <Minus size={20} />
-                    </button>
-                    <div className="text-center">
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        value={weight}
-                        // This is the "Numbers Only" filter
-                        onKeyDown={(e) => {
-                          if (["e", "E", "+", "-"].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        onChange={(e) => setWeight(e.target.value)}
-                        className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
-                      />
-                      <span className="block text-[8px] font-black text-zinc-600 uppercase">
-                        KG
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setWeight((w) => parseFloat(w) + 2.5)}
-                      className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
-                    >
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                  {/* REPS INPUT WITH NUMERIC KEYPAD & STEPPER */}
-                  <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
-                    <button
-                      onClick={() =>
-                        setReps((r) => Math.max(0, parseInt(r) - 1))
-                      }
-                      className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
-                    >
-                      <Minus size={20} />
-                    </button>
-                    <div className="text-center">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={reps}
-                        onChange={(e) => setReps(e.target.value)}
-                        className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
-                      />
-                      <span className="block text-[8px] font-black text-zinc-600 uppercase">
-                        Reps
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setReps((r) => parseInt(r) + 1)}
-                      className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
-                    >
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 pt-2 opacity-20">
-                    <ChevronRight size={14} />
-                    <span className="text-[7px] font-black uppercase tracking-[0.4em]">
-                      Swipe Log
-                    </span>
-                  </div>
+                <div className="mt-4 flex items-center gap-2 bg-black/40 p-2.5 px-4 rounded-full border border-zinc-800/50 w-fit">
+                  <History size={12} className="text-orange-500/50" />
+                  <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">
+                    {exHistory[0]
+                      ? `Prev: ${exHistory[0].weight}kg x ${exHistory[0].reps}`
+                      : "New Move"}
+                  </span>
                 </div>
-              </motion.div>
-            ) : (
-              <div className="text-center py-20 opacity-20 flex flex-col items-center">
-                <Flame size={48} />
-                <span className="text-xs font-black mt-4 italic uppercase">
-                  Rest Day
-                </span>
               </div>
-            )}
-          </main>
+
+              <div className="space-y-4">
+                {/* WEIGHT INPUT - NUMERIC ONLY REGEX */}
+                <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
+                  <button
+                    onClick={() =>
+                      setWeight((w) =>
+                        Math.max(0, (parseFloat(w) || 0) - 2.5).toString()
+                      )
+                    }
+                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <div className="text-center">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={weight}
+                      onChange={(e) =>
+                        setWeight(e.target.value.replace(/[^0-9.]/g, ""))
+                      }
+                      className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                    />
+                    <span className="block text-[8px] font-black text-zinc-600 uppercase">
+                      KG
+                    </span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setWeight((w) => ((parseFloat(w) || 0) + 2.5).toString())
+                    }
+                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+                {/* REPS INPUT - NO DECIMALS REGEX */}
+                <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
+                  <button
+                    onClick={() =>
+                      setReps((r) =>
+                        Math.max(0, (parseInt(r) || 0) - 1).toString()
+                      )
+                    }
+                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <div className="text-center">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={reps}
+                      onChange={(e) =>
+                        setReps(e.target.value.replace(/[^0-9]/g, ""))
+                      }
+                      className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                    />
+                    <span className="block text-[8px] font-black text-zinc-600 uppercase">
+                      Reps
+                    </span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setReps((r) => ((parseInt(r) || 0) + 1).toString())
+                    }
+                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="text-center py-20 opacity-20 flex flex-col items-center">
+              <Flame size={48} />
+              <span className="text-xs font-black mt-4 italic uppercase">
+                Rest Day
+              </span>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -500,94 +463,63 @@ function WorkoutApp() {
           <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">
             The Lab
           </h2>
-          <ActivityCalendar history={history} />
 
-          <div className="mt-10 space-y-4">
-            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-2">
-              Records
+          <InfiniteCalendar
+            history={history}
+            selectedDate={selectedCalDate}
+            onDateSelect={setSelectedCalDate}
+          />
+
+          {/* LAST SESSION SECTION */}
+          <div className="mt-8 bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem]">
+            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">
+              Last Session
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              {prList.length > 0 ? (
-                prList.map((pr, i) => (
-                  <div
-                    key={i}
-                    className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-3xl"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <Zap size={12} className="text-orange-500" />
-                      <Trophy size={10} className="text-zinc-700" />
-                    </div>
-                    <p className="text-[10px] font-black text-zinc-300 uppercase truncate mb-1">
-                      {pr.name}
-                    </p>
-                    <p className="text-xl font-black">{pr.weight}kg</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-[10px] text-zinc-800 font-bold col-span-2 text-center py-4 italic uppercase">
-                  No records
-                </p>
-              )}
-            </div>
+            {lastSession ? (
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-lg font-black uppercase italic">
+                    {lastSession.name}
+                  </p>
+                  <p className="text-[10px] text-orange-500 font-bold uppercase">
+                    {lastSession.weight}kg x {lastSession.reps}
+                  </p>
+                </div>
+                <Clock size={20} className="text-zinc-700" />
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-700 italic">No data yet</p>
+            )}
           </div>
 
-          <div className="mt-10 space-y-6">
+          {/* DAY DETAILS (History for selected date) */}
+          <div className="mt-6 space-y-4">
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-2">
-              History
+              {selectedCalDate.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}{" "}
+              Activity
             </h3>
-            {dates.map((d) => (
-              <div
-                key={d}
-                className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mb-4"
-              >
-                <div className="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4 text-orange-500 font-black italic text-xs uppercase">
-                  {new Date(d).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                  })}{" "}
-                  <Clock size={14} className="text-zinc-700" />
-                </div>
-                <div className="space-y-3">
-                  {groups[d].map((it, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center text-xs font-black uppercase italic"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-zinc-300">{it.name}</span>
-                        {getIsPR(it.name, it.weight) && (
-                          <Trophy
-                            size={12}
-                            className="text-orange-500"
-                            fill="currentColor"
-                          />
-                        )}
-                      </div>
-                      <div className="text-white">
-                        {it.weight}kg <span className="text-zinc-600">x</span>{" "}
-                        {it.reps}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {selectedDayLogs.length > 0 ? (
+              <div className="bg-zinc-900/20 border border-zinc-800 p-6 rounded-[2.5rem] space-y-3">
+                {selectedDayLogs.map((it, idx) => (
+                  <div
+                    key={idx}
+                    className="flex justify-between text-xs font-black uppercase italic"
+                  >
+                    <span className="text-zinc-300">{it.name}</span>
+                    <span className="text-white">
+                      {it.weight}kg x {it.reps}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-            <div className="flex gap-3 mt-12">
-              <button
-                onClick={exportData}
-                className="flex-1 py-4 bg-zinc-900 text-white rounded-2xl font-black text-[9px] uppercase border border-zinc-800 flex items-center justify-center gap-2 active:scale-95"
-              >
-                <Download size={12} /> Backup
-              </button>
-              <label className="flex-1 py-4 bg-zinc-900 text-white rounded-2xl font-black text-[9px] uppercase border border-zinc-800 text-center flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                <Upload size={12} /> Restore{" "}
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => importData(e.target.files[0])}
-                />
-              </label>
-            </div>
+            ) : (
+              <p className="text-center text-[10px] text-zinc-800 uppercase py-4 font-black">
+                No training on this day
+              </p>
+            )}
           </div>
 
           <div className="mt-16 pb-8 text-center opacity-20">
@@ -595,7 +527,7 @@ function WorkoutApp() {
               Property of SKIPGYM
             </p>
             <p className="text-[7px] font-bold uppercase tracking-widest mt-1">
-              Built for the 1% by AZUKA— 2026
+              Built for the 1% by AZUKA— 2026 [cite: 2026-01-01]
             </p>
           </div>
         </motion.div>
