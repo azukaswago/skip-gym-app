@@ -25,7 +25,76 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-// --- INFINITE CALENDAR COMPONENT (2026-2046) ---
+// --- SUB-COMPONENT: ONBOARDING (Missing in your last paste) ---
+const Onboarding = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const slides = [
+    {
+      title: "THE VISION",
+      desc: "SKIPGYM is for the 1%. No fluff. Just your raw progress recorded locally.",
+      icon: <Info size={40} className="text-white" />,
+    },
+    {
+      title: "OFFLINE FIRST",
+      desc: "No data? No problem. Add to Home Screen for the full experience.",
+      icon: <Zap size={40} className="text-orange-500" />,
+    },
+    {
+      title: "MASTER CONTROL",
+      desc: "Privacy is absolute. The Red Trash icon clears all local data instantly [cite: 2026-01-01].",
+      icon: <Trash2 size={40} className="text-red-500" />,
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[600] bg-black p-8 flex flex-col justify-between"
+    >
+      <div className="mt-12">
+        <div className="flex gap-2 mb-12">
+          {slides.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-all ${
+                i <= step ? "bg-white" : "bg-zinc-800"
+              }`}
+            />
+          ))}
+        </div>
+        <motion.div
+          key={step}
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="space-y-6"
+        >
+          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800">
+            {slides[step].icon}
+          </div>
+          <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">
+            {slides[step].title}
+          </h2>
+          <p className="text-zinc-400 text-xl leading-relaxed font-medium">
+            {slides[step].desc}
+          </p>
+        </motion.div>
+      </div>
+      <button
+        onClick={() =>
+          step < slides.length - 1 ? setStep(step + 1) : onComplete()
+        }
+        className="w-full py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2"
+      >
+        {step === slides.length - 1 ? "Enter the Lab" : "Next"}{" "}
+        <ChevronRight size={18} />
+      </button>
+    </motion.div>
+  );
+};
+
+// --- INFINITE CALENDAR COMPONENT ---
 const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const years = Array.from({ length: 21 }, (_, i) => 2026 + i);
@@ -94,7 +163,6 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
           ))}
         </div>
       </div>
-
       <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
         {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
           <span
@@ -123,9 +191,9 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
                   new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
                 )
               }
-              className={`aspect-square rounded-full flex items-center justify-center text-[11px] font-black transition-all relative
-                ${active ? "text-white" : "text-zinc-700"}
-                ${isSelected ? "border-2 border-white" : ""}`}
+              className={`aspect-square rounded-full flex items-center justify-center text-[11px] font-black transition-all relative ${
+                active ? "text-white" : "text-zinc-700"
+              } ${isSelected ? "border-2 border-white" : ""}`}
             >
               {day}
               {active && (
@@ -157,11 +225,9 @@ function WorkoutApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
   const [selectedCalDate, setSelectedCalDate] = useState(new Date());
-
   const [rest, setRest] = useState(60);
   const [isResting, setIsResting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
-
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [activeSet, setActiveSet] = useState(1);
@@ -180,7 +246,6 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
-  // Logic for "Last Session"
   const lastSession = useMemo(() => {
     const sorted = Object.values(history).sort(
       (a, b) => new Date(b.date) - new Date(a.date)
@@ -188,7 +253,6 @@ function WorkoutApp() {
     return sorted.length > 0 ? sorted[0] : null;
   }, [history]);
 
-  // Logic for Selected Day's details in Stats
   const selectedDayLogs = useMemo(() => {
     const dStr = selectedCalDate.toISOString().split("T")[0];
     return Object.values(history).filter((h) => h.date?.startsWith(dStr));
@@ -274,6 +338,18 @@ function WorkoutApp() {
               <SkipForward size={32} />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {view === "create" && (
+          <CreatorScreen
+            onCancel={() => setView("train")}
+            onSave={(d) => {
+              saveRoutine(d.day, d);
+              setView("train");
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -369,9 +445,7 @@ function WorkoutApp() {
                   </span>
                 </div>
               </div>
-
               <div className="space-y-4">
-                {/* WEIGHT INPUT - NUMERIC ONLY REGEX */}
                 <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                   <button
                     onClick={() =>
@@ -406,7 +480,6 @@ function WorkoutApp() {
                     <Plus size={20} />
                   </button>
                 </div>
-                {/* REPS INPUT - NO DECIMALS REGEX */}
                 <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                   <button
                     onClick={() =>
@@ -463,14 +536,11 @@ function WorkoutApp() {
           <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">
             The Lab
           </h2>
-
           <InfiniteCalendar
             history={history}
             selectedDate={selectedCalDate}
             onDateSelect={setSelectedCalDate}
           />
-
-          {/* LAST SESSION SECTION */}
           <div className="mt-8 bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem]">
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">
               Last Session
@@ -491,8 +561,6 @@ function WorkoutApp() {
               <p className="text-xs text-zinc-700 italic">No data yet</p>
             )}
           </div>
-
-          {/* DAY DETAILS (History for selected date) */}
           <div className="mt-6 space-y-4">
             <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-2">
               {selectedCalDate.toLocaleDateString("en-US", {
@@ -521,7 +589,6 @@ function WorkoutApp() {
               </p>
             )}
           </div>
-
           <div className="mt-16 pb-8 text-center opacity-20">
             <p className="text-[8px] font-black uppercase tracking-[0.4em]">
               Property of SKIPGYM
