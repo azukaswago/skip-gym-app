@@ -16,32 +16,29 @@ import {
   Clock,
   Trophy,
   Timer,
-  AlertTriangle,
-  Download,
-  Upload,
   Zap,
   Info,
   CheckCircle2,
-  ChevronLeft,
+  X,
 } from "lucide-react";
 
-// --- SUB-COMPONENT: ONBOARDING (Missing in your last paste) ---
+// --- SUB-COMPONENT: IMPROVED ONBOARDING ---
 const Onboarding = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const slides = [
     {
-      title: "THE VISION",
-      desc: "SKIPGYM is for the 1%. No fluff. Just your raw progress recorded locally.",
-      icon: <Info size={40} className="text-white" />,
+      title: "THE LAB",
+      desc: "Tap the Calendar to enter The Lab. Track progress across 20 years (2026-2046).",
+      icon: <Calendar size={40} className="text-orange-500" />,
     },
     {
-      title: "OFFLINE FIRST",
-      desc: "No data? No problem. Add to Home Screen for the full experience.",
-      icon: <Zap size={40} className="text-orange-500" />,
+      title: "SWIPE TO LOG",
+      desc: "Finished a set? Swipe the workout card LEFT to log it and start the rest timer.",
+      icon: <SkipForward size={40} className="text-white" />,
     },
     {
-      title: "MASTER CONTROL",
-      desc: "Privacy is absolute. The Red Trash icon clears all local data instantly [cite: 2026-01-01].",
+      title: "OFFLINE & PRIVATE",
+      desc: "Add to Home Screen. Everything stays on your phone. Hit the Red Trash to wipe it all [cite: 2026-01-01].",
       icon: <Trash2 size={40} className="text-red-500" />,
     },
   ];
@@ -94,6 +91,56 @@ const Onboarding = ({ onComplete }) => {
   );
 };
 
+// --- SUB-COMPONENT: DAY DETAIL MODAL ---
+const DayDetailModal = ({ date, logs, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[700] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4"
+  >
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      exit={{ y: 100 }}
+      className="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] border border-zinc-800 p-8 shadow-2xl"
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-black italic uppercase tracking-tighter">
+          {date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </h3>
+        <button
+          onClick={onClose}
+          className="p-2 bg-zinc-800 rounded-full text-zinc-400"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      <div className="space-y-4 max-h-[40vh] overflow-y-auto no-scrollbar">
+        {logs.length > 0 ? (
+          logs.map((it, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center border-b border-zinc-800/50 pb-3"
+            >
+              <span className="text-sm font-black uppercase italic text-zinc-300">
+                {it.name}
+              </span>
+              <span className="text-orange-500 font-black tabular-nums">
+                {it.weight}kg x {it.reps}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-zinc-600 italic text-center py-4 text-xs font-bold uppercase">
+            No records found
+          </p>
+        )}
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
 // --- INFINITE CALENDAR COMPONENT ---
 const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
   const [viewDate, setViewDate] = useState(new Date());
@@ -132,8 +179,8 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
   };
 
   return (
-    <div className="w-full bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mt-4">
-      <div className="flex justify-between items-center mb-6 px-2">
+    <div className="w-full bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mt-4 shadow-inner">
+      <div className="flex justify-between items-center mb-6">
         <select
           value={viewDate.getFullYear()}
           onChange={(e) =>
@@ -147,14 +194,14 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
             </option>
           ))}
         </select>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar max-w-[200px]">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[160px]">
           {months.map((m, i) => (
             <button
               key={m}
               onClick={() => setViewDate(new Date(viewDate.getFullYear(), i))}
-              className={`text-[10px] font-black px-2 py-1 rounded-md transition-all ${
+              className={`text-[9px] font-black px-2 py-1 rounded-md transition-all ${
                 viewDate.getMonth() === i
-                  ? "bg-orange-500 text-black"
+                  ? "bg-white text-black"
                   : "text-zinc-600"
               }`}
             >
@@ -163,7 +210,7 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
+      <div className="grid grid-cols-7 gap-y-2 text-center">
         {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
           <span
             key={d}
@@ -179,10 +226,6 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
           ))}
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
           const active = isWorkDay(day);
-          const isSelected =
-            selectedDate?.getDate() === day &&
-            selectedDate?.getMonth() === viewDate.getMonth() &&
-            selectedDate?.getFullYear() === viewDate.getFullYear();
           return (
             <button
               key={day}
@@ -191,13 +234,13 @@ const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
                   new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
                 )
               }
-              className={`aspect-square rounded-full flex items-center justify-center text-[11px] font-black transition-all relative ${
-                active ? "text-white" : "text-zinc-700"
-              } ${isSelected ? "border-2 border-white" : ""}`}
+              className={`aspect-square rounded-full flex flex-col items-center justify-center text-[11px] font-black transition-all relative ${
+                active ? "text-white" : "text-zinc-700 hover:text-zinc-400"
+              }`}
             >
               {day}
               {active && (
-                <div className="absolute bottom-1 w-1 h-1 bg-orange-500 rounded-full shadow-[0_0_8px_#f97316]" />
+                <div className="w-1 h-1 bg-orange-500 rounded-full mt-0.5 shadow-[0_0_8px_#f97316]" />
               )}
             </button>
           );
@@ -216,15 +259,12 @@ function WorkoutApp() {
     saveRoutine,
     recordSet,
     clearAllData,
-    getIsPR,
-    exportData,
-    importData,
   } = useWorkout();
 
   const [showLanding, setShowLanding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
-  const [selectedCalDate, setSelectedCalDate] = useState(new Date());
+  const [selectedCalDate, setSelectedCalDate] = useState(null);
   const [rest, setRest] = useState(60);
   const [isResting, setIsResting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60);
@@ -246,14 +286,18 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
-  const lastSession = useMemo(() => {
-    const sorted = Object.values(history).sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
-    return sorted.length > 0 ? sorted[0] : null;
+  // FIXED: Logic to group the entire last session (all exercises logged on the latest date)
+  const lastSessionData = useMemo(() => {
+    const logs = Object.values(history);
+    if (!logs.length) return null;
+    const latestDateStr = logs
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+      .date.split("T")[0];
+    return logs.filter((l) => l.date.startsWith(latestDateStr));
   }, [history]);
 
   const selectedDayLogs = useMemo(() => {
+    if (!selectedCalDate) return [];
     const dStr = selectedCalDate.toISOString().split("T")[0];
     return Object.values(history).filter((h) => h.date?.startsWith(dStr));
   }, [selectedCalDate, history]);
@@ -281,12 +325,6 @@ function WorkoutApp() {
     return () => clearInterval(t);
   }, [isResting, timeLeft]);
 
-  const handleStart = () => {
-    const hasSeen = localStorage.getItem("skip-gym-onboarding-done");
-    setShowLanding(false);
-    if (!hasSeen) setShowOnboarding(true);
-  };
-
   const handleNext = () => {
     if (exercise) recordSet(exercise.id, weight, reps, exercise.name);
     const total = parseInt(exercise?.sets) || 3;
@@ -310,15 +348,30 @@ function WorkoutApp() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center overflow-x-hidden pb-32">
+    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center overflow-x-hidden pb-32 select-none">
       <AnimatePresence>
-        {showLanding && <LandingScreen onGetStarted={handleStart} />}
+        {showLanding && (
+          <LandingScreen
+            onGetStarted={() => {
+              setShowLanding(false);
+              if (!localStorage.getItem("skip-gym-onboarding-done"))
+                setShowOnboarding(true);
+            }}
+          />
+        )}
         {showOnboarding && (
           <Onboarding
             onComplete={() => {
               localStorage.setItem("skip-gym-onboarding-done", "true");
               setShowOnboarding(false);
             }}
+          />
+        )}
+        {selectedCalDate && (
+          <DayDetailModal
+            date={selectedCalDate}
+            logs={selectedDayLogs}
+            onClose={() => setSelectedCalDate(null)}
           />
         )}
         {isResting && (
@@ -425,8 +478,11 @@ function WorkoutApp() {
               onDragEnd={(_, i) => {
                 if (i.offset.x < -100) handleNext();
               }}
-              className="w-full bg-zinc-900 border border-zinc-800 p-8 rounded-[3.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative"
+              className="w-full bg-zinc-900 border border-zinc-800 p-8 rounded-[3.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative overflow-hidden"
             >
+              <div className="absolute top-0 right-0 p-10 opacity-10">
+                <Dumbbell size={120} />
+              </div>
               <div>
                 <div className="flex justify-between items-start">
                   <h2 className="text-4xl font-black uppercase italic leading-tight truncate pr-4">
@@ -445,7 +501,7 @@ function WorkoutApp() {
                   </span>
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 relative z-10">
                 <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                   <button
                     onClick={() =>
@@ -467,7 +523,7 @@ function WorkoutApp() {
                       }
                       className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
                     />
-                    <span className="block text-[8px] font-black text-zinc-600 uppercase">
+                    <span className="block text-[8px] font-black text-zinc-600 uppercase tracking-widest">
                       KG
                     </span>
                   </div>
@@ -501,7 +557,7 @@ function WorkoutApp() {
                       }
                       className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
                     />
-                    <span className="block text-[8px] font-black text-zinc-600 uppercase">
+                    <span className="block text-[8px] font-black text-zinc-600 uppercase tracking-widest">
                       Reps
                     </span>
                   </div>
@@ -538,57 +594,36 @@ function WorkoutApp() {
           </h2>
           <InfiniteCalendar
             history={history}
-            selectedDate={selectedCalDate}
             onDateSelect={setSelectedCalDate}
           />
-          <div className="mt-8 bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem]">
-            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">
-              Last Session
+
+          <div className="mt-8 bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem]">
+            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">
+              Last Session Overview
             </h3>
-            {lastSession ? (
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-lg font-black uppercase italic">
-                    {lastSession.name}
-                  </p>
-                  <p className="text-[10px] text-orange-500 font-bold uppercase">
-                    {lastSession.weight}kg x {lastSession.reps}
-                  </p>
-                </div>
-                <Clock size={20} className="text-zinc-700" />
-              </div>
-            ) : (
-              <p className="text-xs text-zinc-700 italic">No data yet</p>
-            )}
-          </div>
-          <div className="mt-6 space-y-4">
-            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-2">
-              {selectedCalDate.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}{" "}
-              Activity
-            </h3>
-            {selectedDayLogs.length > 0 ? (
-              <div className="bg-zinc-900/20 border border-zinc-800 p-6 rounded-[2.5rem] space-y-3">
-                {selectedDayLogs.map((it, idx) => (
+            {lastSessionData ? (
+              <div className="space-y-3">
+                {lastSessionData.map((l, i) => (
                   <div
-                    key={idx}
-                    className="flex justify-between text-xs font-black uppercase italic"
+                    key={i}
+                    className="flex justify-between items-center bg-black/40 p-3 rounded-2xl border border-zinc-800/50"
                   >
-                    <span className="text-zinc-300">{it.name}</span>
-                    <span className="text-white">
-                      {it.weight}kg x {it.reps}
+                    <span className="text-[10px] font-black uppercase italic">
+                      {l.name}
+                    </span>
+                    <span className="text-[10px] text-orange-500 font-bold">
+                      {l.weight}kg x {l.reps}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-[10px] text-zinc-800 uppercase py-4 font-black">
-                No training on this day
+              <p className="text-xs text-zinc-700 italic text-center py-4">
+                No data recorded yet.
               </p>
             )}
           </div>
+
           <div className="mt-16 pb-8 text-center opacity-20">
             <p className="text-[8px] font-black uppercase tracking-[0.4em]">
               Property of SKIPGYM
