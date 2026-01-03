@@ -13,15 +13,20 @@ import {
   Calendar,
   Dumbbell,
   Flame,
-  Clock,
-  Trophy,
   Timer,
-  Zap,
-  Info,
-  CheckCircle2,
   X,
   Download,
 } from "lucide-react";
+
+// --- HELPERS ---
+const getDStr = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 // --- SUB-COMPONENT: ONBOARDING ---
 const Onboarding = ({ onComplete }) => {
@@ -39,7 +44,7 @@ const Onboarding = ({ onComplete }) => {
     },
     {
       title: "PRIVACY FIRST",
-      desc: "No accounts. No tracking. Hit the Red Trash icon to wipe all data instantly [cite: 2026-01-01].",
+      desc: "No accounts. No tracking. Hit 'Wipe All' in The Lab to delete everything instantly.",
       icon: <Trash2 size={40} className="text-red-500" />,
     },
   ];
@@ -142,10 +147,10 @@ const DayDetailModal = ({ date, logs, onClose }) => (
   </motion.div>
 );
 
-// --- INFINITE CALENDAR COMPONENT ---
+// --- INFINITE CALENDAR ---
 const InfiniteCalendar = ({ history, onDateSelect }) => {
   const [viewDate, setViewDate] = useState(new Date());
-  const years = Array.from({ length: 21 }, (_, i) => 2026 + i);
+  const years = Array.from({ length: 11 }, (_, i) => 2025 + i);
   const months = [
     "JAN",
     "FEB",
@@ -173,10 +178,10 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
   ).getDay();
 
   const isWorkDay = (day) => {
-    const dStr = `${viewDate.getFullYear()}-${String(
-      viewDate.getMonth() + 1
-    ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return Object.values(history).some((h) => h.date?.startsWith(dStr));
+    const target = getDStr(
+      new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
+    );
+    return Object.values(history).some((h) => getDStr(h.date) === target);
   };
 
   return (
@@ -261,7 +266,6 @@ function WorkoutApp() {
     recordSet,
     clearAllData,
   } = useWorkout();
-
   const [showLanding, setShowLanding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
@@ -287,41 +291,36 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
-  // 1. UTILITY: HAPTIC FEEDBACK
   const triggerHaptic = (pattern = [30]) => {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
-  // 2. UTILITY: ATOMIC EXPORT
   const handleExport = () => {
     const dataStr = JSON.stringify({ history, routines }, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `skipgym-data-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
+    link.setAttribute("download", `skipgym-backup-${getDStr(new Date())}.json`);
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     triggerHaptic(50);
   };
 
   const lastSessionData = useMemo(() => {
     const logs = Object.values(history);
     if (!logs.length) return null;
-    const latestDateStr = logs
-      .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-      .date.split("T")[0];
-    return logs.filter((l) => l.date.startsWith(latestDateStr));
+    const latestDate = getDStr(
+      logs.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date
+    );
+    return logs.filter((l) => getDStr(l.date) === latestDate);
   }, [history]);
 
   const selectedDayLogs = useMemo(() => {
     if (!selectedCalDate) return [];
-    const targetDate = selectedCalDate.toLocaleDateString("en-CA");
-    return Object.values(history).filter((h) => {
-      if (!h.date) return false;
-      return new Date(h.date).toLocaleDateString("en-CA") === targetDate;
-    });
+    const target = getDStr(selectedCalDate);
+    return Object.values(history).filter((h) => getDStr(h.date) === target);
   }, [selectedCalDate, history]);
 
   const exHistory = useMemo(() => {
@@ -331,15 +330,11 @@ function WorkoutApp() {
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [exercise, history]);
 
-  // 3. UTILITY: LIVE PR GLOW LOGIC
   const isCurrentlyPR = useMemo(() => {
-    if (!exercise || !weight) return false;
-    const currentW = parseFloat(weight) || 0;
-    const bestW = exHistory.reduce(
-      (max, h) => Math.max(max, parseFloat(h.weight) || 0),
-      0
-    );
-    return currentW > bestW && bestW > 0;
+    if (!exercise || !weight || !exHistory.length) return false;
+    const currentW = parseFloat(weight);
+    const bestW = Math.max(...exHistory.map((h) => parseFloat(h.weight) || 0));
+    return currentW > bestW;
   }, [weight, exHistory, exercise]);
 
   useEffect(() => {
@@ -446,12 +441,6 @@ function WorkoutApp() {
         </h1>
         <div className="flex gap-2">
           <button
-            onClick={handleExport}
-            className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-zinc-500 border border-zinc-800 active:text-white"
-          >
-            <Download size={18} />
-          </button>
-          <button
             onClick={() =>
               setRest(
                 (r) => [60, 90, 120, 0][([60, 90, 120, 0].indexOf(r) + 1) % 4]
@@ -464,21 +453,6 @@ function WorkoutApp() {
               className={rest > 0 ? "text-orange-500" : "text-zinc-600"}
             />{" "}
             {rest > 0 ? `${rest}s` : "OFF"}
-          </button>
-          <button
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Master Reset: Clear all data? [cite: 2026-01-01]"
-                )
-              ) {
-                triggerHaptic([100, 50, 100]);
-                clearAllData();
-              }
-            }}
-            className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-red-900 border border-zinc-800 active:bg-red-500/10"
-          >
-            <Trash2 size={18} />
           </button>
           <button
             onClick={() => setView("create")}
@@ -545,7 +519,6 @@ function WorkoutApp() {
                 </div>
               </div>
               <div className="space-y-4 relative z-10">
-                {/* WEIGHT INPUT WITH PR GLOW */}
                 <div
                   className={`flex justify-between items-center bg-black/40 p-4 rounded-3xl border transition-all duration-500 relative ${
                     isCurrentlyPR
@@ -597,7 +570,6 @@ function WorkoutApp() {
                     <Plus size={20} />
                   </button>
                 </div>
-
                 <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                   <button
                     onClick={() => {
@@ -691,12 +663,33 @@ function WorkoutApp() {
             )}
           </div>
 
+          {/* POWER USER UTILITIES */}
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={handleExport}
+              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 active:bg-zinc-800"
+            >
+              <Download size={14} /> Export
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Master Reset: Clear all data?")) {
+                  triggerHaptic([100, 50, 100]);
+                  clearAllData();
+                }
+              }}
+              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-900 active:bg-red-500/10"
+            >
+              <Trash2 size={14} /> Wipe All
+            </button>
+          </div>
+
           <div className="mt-16 pb-8 text-center opacity-20">
             <p className="text-[8px] font-black uppercase tracking-[0.4em]">
               Property of SKIPGYM
             </p>
             <p className="text-[7px] font-bold uppercase tracking-widest mt-1">
-              Built for the 1% by AZUKA— 2026 [cite: 2026-01-01]
+              Built for the 1% by AZUKA— 2026
             </p>
           </div>
         </motion.div>
