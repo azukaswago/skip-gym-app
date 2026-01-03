@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, Smartphone, ChevronRight } from "lucide-react";
+import { Shield, Zap, Smartphone, ChevronRight, Download } from "lucide-react";
 
 const LandingScreen = ({ onGetStarted }) => {
   return (
@@ -38,9 +38,9 @@ const LandingScreen = ({ onGetStarted }) => {
             desc: "Auto-detects plateaus and tracks PR trophies.",
           },
           {
-            icon: <Smartphone size={20} />,
-            title: "Offline First",
-            desc: "Works deep in the basement gym with zero bars.",
+            icon: <Download size={20} />,
+            title: "Atomic Export",
+            desc: "Full control. Export your history JSON immediately.",
           },
         ].map((feat, i) => (
           <motion.div
