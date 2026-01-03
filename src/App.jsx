@@ -20,15 +20,16 @@ import {
   Info,
   CheckCircle2,
   X,
+  Download,
 } from "lucide-react";
 
-// --- SUB-COMPONENT: IMPROVED ONBOARDING ---
+// --- SUB-COMPONENT: ONBOARDING ---
 const Onboarding = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const slides = [
     {
       title: "THE LAB",
-      desc: "Tap the Calendar to enter The Lab. Track progress across 20 years (2026-2046).",
+      desc: "Tap the Calendar to enter The Lab. Your data is stored locally on this device.",
       icon: <Calendar size={40} className="text-orange-500" />,
     },
     {
@@ -37,8 +38,8 @@ const Onboarding = ({ onComplete }) => {
       icon: <SkipForward size={40} className="text-white" />,
     },
     {
-      title: "OFFLINE & PRIVATE",
-      desc: "Add to Home Screen. Everything stays on your phone. Hit the Red Trash to wipe it all [cite: 2026-01-01].",
+      title: "PRIVACY FIRST",
+      desc: "No accounts. No tracking. Hit the Red Trash icon to wipe all data instantly [cite: 2026-01-01].",
       icon: <Trash2 size={40} className="text-red-500" />,
     },
   ];
@@ -132,8 +133,8 @@ const DayDetailModal = ({ date, logs, onClose }) => (
             </div>
           ))
         ) : (
-          <p className="text-zinc-600 italic text-center py-4 text-xs font-bold uppercase">
-            No records found
+          <p className="text-zinc-600 italic text-center py-4 text-xs font-bold uppercase tracking-widest">
+            No activity
           </p>
         )}
       </div>
@@ -142,7 +143,7 @@ const DayDetailModal = ({ date, logs, onClose }) => (
 );
 
 // --- INFINITE CALENDAR COMPONENT ---
-const InfiniteCalendar = ({ history, onDateSelect, selectedDate }) => {
+const InfiniteCalendar = ({ history, onDateSelect }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const years = Array.from({ length: 21 }, (_, i) => 2026 + i);
   const months = [
@@ -286,7 +287,25 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
-  // FIXED: Logic to group the entire last session (all exercises logged on the latest date)
+  // 1. UTILITY: HAPTIC FEEDBACK
+  const triggerHaptic = (pattern = [30]) => {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  };
+
+  // 2. UTILITY: ATOMIC EXPORT
+  const handleExport = () => {
+    const dataStr = JSON.stringify({ history, routines }, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `skipgym-data-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    link.click();
+    triggerHaptic(50);
+  };
+
   const lastSessionData = useMemo(() => {
     const logs = Object.values(history);
     if (!logs.length) return null;
@@ -298,8 +317,11 @@ function WorkoutApp() {
 
   const selectedDayLogs = useMemo(() => {
     if (!selectedCalDate) return [];
-    const dStr = selectedCalDate.toISOString().split("T")[0];
-    return Object.values(history).filter((h) => h.date?.startsWith(dStr));
+    const targetDate = selectedCalDate.toLocaleDateString("en-CA");
+    return Object.values(history).filter((h) => {
+      if (!h.date) return false;
+      return new Date(h.date).toLocaleDateString("en-CA") === targetDate;
+    });
   }, [selectedCalDate, history]);
 
   const exHistory = useMemo(() => {
@@ -308,6 +330,17 @@ function WorkoutApp() {
       .filter((h) => h.name === exercise.name)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [exercise, history]);
+
+  // 3. UTILITY: LIVE PR GLOW LOGIC
+  const isCurrentlyPR = useMemo(() => {
+    if (!exercise || !weight) return false;
+    const currentW = parseFloat(weight) || 0;
+    const bestW = exHistory.reduce(
+      (max, h) => Math.max(max, parseFloat(h.weight) || 0),
+      0
+    );
+    return currentW > bestW && bestW > 0;
+  }, [weight, exHistory, exercise]);
 
   useEffect(() => {
     if (exercise) {
@@ -326,6 +359,7 @@ function WorkoutApp() {
   }, [isResting, timeLeft]);
 
   const handleNext = () => {
+    triggerHaptic([40, 30, 40]);
     if (exercise) recordSet(exercise.id, weight, reps, exercise.name);
     const total = parseInt(exercise?.sets) || 3;
     if (activeSet < total) {
@@ -412,6 +446,12 @@ function WorkoutApp() {
         </h1>
         <div className="flex gap-2">
           <button
+            onClick={handleExport}
+            className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-zinc-500 border border-zinc-800 active:text-white"
+          >
+            <Download size={18} />
+          </button>
+          <button
             onClick={() =>
               setRest(
                 (r) => [60, 90, 120, 0][([60, 90, 120, 0].indexOf(r) + 1) % 4]
@@ -431,8 +471,10 @@ function WorkoutApp() {
                 window.confirm(
                   "Master Reset: Clear all data? [cite: 2026-01-01]"
                 )
-              )
+              ) {
+                triggerHaptic([100, 50, 100]);
                 clearAllData();
+              }
             }}
             className="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-red-900 border border-zinc-800 active:bg-red-500/10"
           >
@@ -460,6 +502,7 @@ function WorkoutApp() {
                 onClick={() => {
                   setSelectedDay(d);
                   setCurrentIndex(0);
+                  triggerHaptic();
                 }}
                 className={`px-4 py-2 rounded-xl text-[10px] font-black border shrink-0 transition-all ${
                   selectedDay === d
@@ -502,13 +545,30 @@ function WorkoutApp() {
                 </div>
               </div>
               <div className="space-y-4 relative z-10">
-                <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
+                {/* WEIGHT INPUT WITH PR GLOW */}
+                <div
+                  className={`flex justify-between items-center bg-black/40 p-4 rounded-3xl border transition-all duration-500 relative ${
+                    isCurrentlyPR
+                      ? "border-orange-500 shadow-[0_0_25px_rgba(249,115,22,0.3)]"
+                      : "border-zinc-800"
+                  }`}
+                >
+                  {isCurrentlyPR && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-black text-[7px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter"
+                    >
+                      PR Zone
+                    </motion.div>
+                  )}
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setWeight((w) =>
                         Math.max(0, (parseFloat(w) || 0) - 2.5).toString()
-                      )
-                    }
+                      );
+                      triggerHaptic();
+                    }}
                     className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
                     <Minus size={20} />
@@ -528,21 +588,24 @@ function WorkoutApp() {
                     </span>
                   </div>
                   <button
-                    onClick={() =>
-                      setWeight((w) => ((parseFloat(w) || 0) + 2.5).toString())
-                    }
+                    onClick={() => {
+                      setWeight((w) => ((parseFloat(w) || 0) + 2.5).toString());
+                      triggerHaptic();
+                    }}
                     className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
                     <Plus size={20} />
                   </button>
                 </div>
+
                 <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       setReps((r) =>
                         Math.max(0, (parseInt(r) || 0) - 1).toString()
-                      )
-                    }
+                      );
+                      triggerHaptic();
+                    }}
                     className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
                     <Minus size={20} />
@@ -562,9 +625,10 @@ function WorkoutApp() {
                     </span>
                   </div>
                   <button
-                    onClick={() =>
-                      setReps((r) => ((parseInt(r) || 0) + 1).toString())
-                    }
+                    onClick={() => {
+                      setReps((r) => ((parseInt(r) || 0) + 1).toString());
+                      triggerHaptic();
+                    }}
                     className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
                     <Plus size={20} />
@@ -594,7 +658,10 @@ function WorkoutApp() {
           </h2>
           <InfiniteCalendar
             history={history}
-            onDateSelect={setSelectedCalDate}
+            onDateSelect={(d) => {
+              setSelectedCalDate(d);
+              triggerHaptic();
+            }}
           />
 
           <div className="mt-8 bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem]">
@@ -637,13 +704,19 @@ function WorkoutApp() {
 
       <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-12 z-[100] bg-zinc-900/90 backdrop-blur-xl px-12 py-5 rounded-[2.5rem] border border-zinc-800">
         <button
-          onClick={() => setView("train")}
+          onClick={() => {
+            setView("train");
+            triggerHaptic();
+          }}
           className={view === "train" ? "text-orange-500" : "text-zinc-600"}
         >
           <Dumbbell size={24} />
         </button>
         <button
-          onClick={() => setView("stats")}
+          onClick={() => {
+            setView("stats");
+            triggerHaptic();
+          }}
           className={view === "stats" ? "text-orange-500" : "text-zinc-600"}
         >
           <Calendar size={24} />
