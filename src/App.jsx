@@ -18,14 +18,10 @@ import {
   Download,
 } from "lucide-react";
 
-// --- HELPERS ---
 const getDStr = (date) => {
   if (!date) return "";
   const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
 // --- SUB-COMPONENT: ONBOARDING ---
@@ -34,18 +30,18 @@ const Onboarding = ({ onComplete }) => {
   const slides = [
     {
       title: "THE LAB",
-      desc: "Tap the Calendar to enter The Lab. Your data is stored locally on this device.",
-      icon: <Calendar size={40} className="text-orange-500" />,
+      desc: "Deep-dive into your training history. Your data is sovereign and stored locally.",
+      icon: <Calendar size={32} className="text-orange-500" />,
     },
     {
       title: "SWIPE TO LOG",
-      desc: "Finished a set? Swipe the workout card LEFT to log it and start the rest timer.",
-      icon: <SkipForward size={40} className="text-white" />,
+      desc: "Swipe LEFT to log sets and trigger the precision rest timer.",
+      icon: <SkipForward size={32} className="text-white" />,
     },
     {
-      title: "PRIVACY FIRST",
-      desc: "No accounts. No tracking. Hit 'Wipe All' in The Lab to delete everything instantly.",
-      icon: <Trash2 size={40} className="text-red-500" />,
+      title: "ZERO FOOTPRINT",
+      desc: "No accounts. No tracking. Complete data ownership.",
+      icon: <Trash2 size={32} className="text-red-500" />,
     },
   ];
 
@@ -61,9 +57,7 @@ const Onboarding = ({ onComplete }) => {
           {slides.map((_, i) => (
             <div
               key={i}
-              className={`h-1 flex-1 rounded-full transition-all ${
-                i <= step ? "bg-white" : "bg-zinc-800"
-              }`}
+              className={`h-1 flex-1 rounded-full transition-all ${i <= step ? "bg-white" : "bg-zinc-800"}`}
             />
           ))}
         </div>
@@ -71,15 +65,15 @@ const Onboarding = ({ onComplete }) => {
           key={step}
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="space-y-6"
+          className="space-y-4"
         >
-          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800">
+          <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-zinc-800">
             {slides[step].icon}
           </div>
-          <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">
+          <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">
             {slides[step].title}
           </h2>
-          <p className="text-zinc-400 text-xl leading-relaxed font-medium">
+          <p className="text-zinc-500 text-sm leading-relaxed font-bold uppercase tracking-tight">
             {slides[step].desc}
           </p>
         </motion.div>
@@ -88,16 +82,16 @@ const Onboarding = ({ onComplete }) => {
         onClick={() =>
           step < slides.length - 1 ? setStep(step + 1) : onComplete()
         }
-        className="w-full py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2"
+        className="w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl flex items-center justify-center gap-2"
       >
-        {step === slides.length - 1 ? "Enter the Lab" : "Next"}{" "}
-        <ChevronRight size={18} />
+        {step === slides.length - 1 ? "Initialize Lab" : "Next"}{" "}
+        <ChevronRight size={16} />
       </button>
     </motion.div>
   );
 };
 
-// --- SUB-COMPONENT: DAY DETAIL MODAL ---
+// --- DAY DETAIL MODAL ---
 const DayDetailModal = ({ date, logs, onClose }) => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -109,37 +103,37 @@ const DayDetailModal = ({ date, logs, onClose }) => (
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       exit={{ y: 100 }}
-      className="bg-zinc-900 w-full max-w-sm rounded-[2.5rem] border border-zinc-800 p-8 shadow-2xl"
+      className="bg-zinc-900 w-full max-w-sm rounded-[2rem] border border-zinc-800 p-6 shadow-2xl"
     >
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-black italic uppercase tracking-tighter">
+        <h3 className="text-lg font-black italic uppercase tracking-tighter">
           {date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </h3>
         <button
           onClick={onClose}
           className="p-2 bg-zinc-800 rounded-full text-zinc-400"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
       </div>
-      <div className="space-y-4 max-h-[40vh] overflow-y-auto no-scrollbar">
+      <div className="space-y-3 max-h-[40vh] overflow-y-auto no-scrollbar">
         {logs.length > 0 ? (
           logs.map((it, idx) => (
             <div
               key={idx}
-              className="flex justify-between items-center border-b border-zinc-800/50 pb-3"
+              className="flex justify-between items-center border-b border-zinc-800/50 pb-2"
             >
-              <span className="text-sm font-black uppercase italic text-zinc-300">
+              <span className="text-[10px] font-black uppercase italic text-zinc-400">
                 {it.name}
               </span>
-              <span className="text-orange-500 font-black tabular-nums">
+              <span className="text-orange-500 font-black text-[10px] tabular-nums">
                 {it.weight}kg x {it.reps}
               </span>
             </div>
           ))
         ) : (
-          <p className="text-zinc-600 italic text-center py-4 text-xs font-bold uppercase tracking-widest">
-            No activity
+          <p className="text-zinc-700 text-[8px] font-black text-center py-4 uppercase">
+            No records found
           </p>
         )}
       </div>
@@ -165,34 +159,33 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
     "NOV",
     "DEC",
   ];
-
   const daysInMonth = new Date(
     viewDate.getFullYear(),
     viewDate.getMonth() + 1,
-    0
+    0,
   ).getDate();
   const firstDay = new Date(
     viewDate.getFullYear(),
     viewDate.getMonth(),
-    1
+    1,
   ).getDay();
 
   const isWorkDay = (day) => {
     const target = getDStr(
-      new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
+      new Date(viewDate.getFullYear(), viewDate.getMonth(), day),
     );
     return Object.values(history).some((h) => getDStr(h.date) === target);
   };
 
   return (
-    <div className="w-full bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mt-4 shadow-inner">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full bg-zinc-900/40 border border-zinc-800 p-5 rounded-[2rem] mt-4">
+      <div className="flex justify-between items-center mb-4">
         <select
           value={viewDate.getFullYear()}
           onChange={(e) =>
             setViewDate(new Date(parseInt(e.target.value), viewDate.getMonth()))
           }
-          className="bg-transparent text-orange-500 font-black italic outline-none text-lg"
+          className="bg-transparent text-orange-500 font-black italic outline-none text-sm"
         >
           {years.map((y) => (
             <option key={y} value={y} className="bg-black">
@@ -200,27 +193,23 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
             </option>
           ))}
         </select>
-        <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[160px]">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[140px]">
           {months.map((m, i) => (
             <button
               key={m}
               onClick={() => setViewDate(new Date(viewDate.getFullYear(), i))}
-              className={`text-[9px] font-black px-2 py-1 rounded-md transition-all ${
-                viewDate.getMonth() === i
-                  ? "bg-white text-black"
-                  : "text-zinc-600"
-              }`}
+              className={`text-[8px] font-black px-1.5 py-1 rounded transition-all ${viewDate.getMonth() === i ? "bg-white text-black" : "text-zinc-600"}`}
             >
               {m}
             </button>
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-y-2 text-center">
+      <div className="grid grid-cols-7 gap-y-1 text-center">
         {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
           <span
             key={d}
-            className="text-[8px] font-black text-zinc-800 uppercase"
+            className="text-[7px] font-black text-zinc-800 uppercase"
           >
             {d}
           </span>
@@ -237,16 +226,14 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
               key={day}
               onClick={() =>
                 onDateSelect(
-                  new Date(viewDate.getFullYear(), viewDate.getMonth(), day)
+                  new Date(viewDate.getFullYear(), viewDate.getMonth(), day),
                 )
               }
-              className={`aspect-square rounded-full flex flex-col items-center justify-center text-[11px] font-black transition-all relative ${
-                active ? "text-white" : "text-zinc-700 hover:text-zinc-400"
-              }`}
+              className={`aspect-square rounded-full flex flex-col items-center justify-center text-[10px] font-black relative ${active ? "text-white" : "text-zinc-700"}`}
             >
               {day}
               {active && (
-                <div className="w-1 h-1 bg-orange-500 rounded-full mt-0.5 shadow-[0_0_8px_#f97316]" />
+                <div className="w-0.5 h-0.5 bg-orange-500 rounded-full mt-0.5" />
               )}
             </button>
           );
@@ -295,34 +282,6 @@ function WorkoutApp() {
     if (navigator.vibrate) navigator.vibrate(pattern);
   };
 
-  const handleExport = () => {
-    const dataStr = JSON.stringify({ history, routines }, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `skipgym-backup-${getDStr(new Date())}.json`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    triggerHaptic(50);
-  };
-
-  const lastSessionData = useMemo(() => {
-    const logs = Object.values(history);
-    if (!logs.length) return null;
-    const latestDate = getDStr(
-      logs.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date
-    );
-    return logs.filter((l) => getDStr(l.date) === latestDate);
-  }, [history]);
-
-  const selectedDayLogs = useMemo(() => {
-    if (!selectedCalDate) return [];
-    const target = getDStr(selectedCalDate);
-    return Object.values(history).filter((h) => getDStr(h.date) === target);
-  }, [selectedCalDate, history]);
-
   const exHistory = useMemo(() => {
     if (!exercise?.name) return [];
     return Object.values(history)
@@ -349,12 +308,15 @@ function WorkoutApp() {
     let t;
     if (isResting && timeLeft > 0)
       t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
-    else if (timeLeft <= 0 && isResting) setIsResting(false);
+    else if (timeLeft <= 0 && isResting) {
+      setIsResting(false);
+      triggerHaptic([100, 50, 100]);
+    }
     return () => clearInterval(t);
   }, [isResting, timeLeft]);
 
   const handleNext = () => {
-    triggerHaptic([40, 30, 40]);
+    triggerHaptic([40, 30]);
     if (exercise) recordSet(exercise.id, weight, reps, exercise.name);
     const total = parseInt(exercise?.sets) || 3;
     if (activeSet < total) {
@@ -370,7 +332,7 @@ function WorkoutApp() {
         setIsResting(true);
       }
     } else {
-      alert("Session Complete");
+      alert("System Status: Session Complete");
       setCurrentIndex(0);
       setActiveSet(1);
     }
@@ -399,7 +361,13 @@ function WorkoutApp() {
         {selectedCalDate && (
           <DayDetailModal
             date={selectedCalDate}
-            logs={selectedDayLogs}
+            logs={useMemo(
+              () =>
+                Object.values(history).filter(
+                  (h) => getDStr(h.date) === getDStr(selectedCalDate),
+                ),
+              [selectedCalDate, history],
+            )}
             onClose={() => setSelectedCalDate(null)}
           />
         )}
@@ -410,14 +378,14 @@ function WorkoutApp() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[500] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center"
           >
-            <div className="text-[120px] font-black italic tabular-nums text-orange-500">
+            <div className="text-[100px] font-black italic tabular-nums text-orange-500">
               {timeLeft}
             </div>
             <button
               onClick={() => setIsResting(false)}
-              className="bg-zinc-800 p-8 rounded-full border border-zinc-700 mt-10"
+              className="bg-zinc-900 p-6 rounded-full border border-zinc-800 mt-10"
             >
-              <SkipForward size={32} />
+              <SkipForward size={24} />
             </button>
           </motion.div>
         )}
@@ -426,6 +394,7 @@ function WorkoutApp() {
       <AnimatePresence>
         {view === "create" && (
           <CreatorScreen
+            routines={routines}
             onCancel={() => setView("train")}
             onSave={(d) => {
               saveRoutine(d.day, d);
@@ -435,30 +404,31 @@ function WorkoutApp() {
         )}
       </AnimatePresence>
 
-      <header className="mb-6 w-full max-w-sm flex justify-between items-center">
-        <h1 className="text-3xl font-black italic tracking-tighter">
+      {/* NON-STICKY HEADER */}
+      <header className="mb-6 w-full max-w-sm flex justify-between items-center relative z-10">
+        <h1 className="text-2xl font-black italic tracking-tighter">
           SKIP<span className="text-orange-500">GYM</span>
         </h1>
         <div className="flex gap-2">
           <button
             onClick={() =>
               setRest(
-                (r) => [60, 90, 120, 0][([60, 90, 120, 0].indexOf(r) + 1) % 4]
+                (r) => [60, 90, 120, 0][([60, 90, 120, 0].indexOf(r) + 1) % 4],
               )
             }
-            className="w-16 h-10 bg-zinc-900 rounded-full flex items-center justify-center gap-1 border border-zinc-800 text-[10px] font-black"
+            className="w-14 h-9 bg-zinc-900 rounded-full flex items-center justify-center gap-1 border border-zinc-800 text-[8px] font-black"
           >
             <Timer
-              size={14}
+              size={12}
               className={rest > 0 ? "text-orange-500" : "text-zinc-600"}
             />{" "}
             {rest > 0 ? `${rest}s` : "OFF"}
           </button>
           <button
             onClick={() => setView("create")}
-            className="w-10 h-10 bg-orange-500 text-black rounded-full flex items-center justify-center"
+            className="w-9 h-9 bg-orange-500 text-black rounded-full flex items-center justify-center"
           >
-            <Plus size={20} />
+            <Plus size={18} />
           </button>
         </div>
       </header>
@@ -469,25 +439,23 @@ function WorkoutApp() {
           animate={{ opacity: 1 }}
           className="w-full max-w-sm"
         >
-          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-8 py-1">
+          {/* DAY PICKER */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 py-1">
             {days.map((d) => (
               <button
                 key={d}
                 onClick={() => {
-                  setSelectedDay(d);
+                  setSelectedDay(d.toUpperCase());
                   setCurrentIndex(0);
                   triggerHaptic();
                 }}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black border shrink-0 transition-all ${
-                  selectedDay === d
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900 text-zinc-600 border-zinc-800"
-                }`}
+                className={`px-3 py-2 rounded-xl text-[9px] font-black border shrink-0 transition-all ${selectedDay === d.toUpperCase() ? "bg-white text-black border-white" : "bg-zinc-900 text-zinc-600 border-zinc-800"}`}
               >
-                {d}
+                {d.slice(0, 3)}
               </button>
             ))}
           </div>
+
           {routine ? (
             <motion.div
               drag="x"
@@ -495,56 +463,44 @@ function WorkoutApp() {
               onDragEnd={(_, i) => {
                 if (i.offset.x < -100) handleNext();
               }}
-              className="w-full bg-zinc-900 border border-zinc-800 p-8 rounded-[3.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative overflow-hidden"
+              className="w-full bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem] aspect-[4/5] flex flex-col justify-between shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-10 opacity-10">
-                <Dumbbell size={120} />
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Dumbbell size={80} />
               </div>
               <div>
                 <div className="flex justify-between items-start">
-                  <h2 className="text-4xl font-black uppercase italic leading-tight truncate pr-4">
+                  <h2 className="text-2xl font-black uppercase italic leading-tight truncate pr-4">
                     {exercise?.name}
                   </h2>
-                  <div className="bg-orange-500 text-black px-3 py-1 rounded-full font-black text-[10px] shrink-0">
-                    SET {activeSet}
+                  <div className="bg-orange-500 text-black px-2 py-0.5 rounded-full font-black text-[8px] shrink-0 uppercase">
+                    Set {activeSet}
                   </div>
                 </div>
-                <div className="mt-4 flex items-center gap-2 bg-black/40 p-2.5 px-4 rounded-full border border-zinc-800/50 w-fit">
-                  <History size={12} className="text-orange-500/50" />
-                  <span className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">
+                <div className="mt-3 flex items-center gap-2 bg-black/40 p-2 px-3 rounded-full border border-zinc-800/50 w-fit">
+                  <History size={10} className="text-orange-500/50" />
+                  <span className="text-[8px] font-black uppercase text-zinc-500 tracking-widest">
                     {exHistory[0]
                       ? `Prev: ${exHistory[0].weight}kg x ${exHistory[0].reps}`
-                      : "New Move"}
+                      : "Initial Log"}
                   </span>
                 </div>
               </div>
-              <div className="space-y-4 relative z-10">
+
+              <div className="space-y-3 relative z-10">
                 <div
-                  className={`flex justify-between items-center bg-black/40 p-4 rounded-3xl border transition-all duration-500 relative ${
-                    isCurrentlyPR
-                      ? "border-orange-500 shadow-[0_0_25px_rgba(249,115,22,0.3)]"
-                      : "border-zinc-800"
-                  }`}
+                  className={`flex justify-between items-center bg-black/40 p-3 rounded-[2rem] border transition-all ${isCurrentlyPR ? "border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.2)]" : "border-zinc-800"}`}
                 >
-                  {isCurrentlyPR && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-black text-[7px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter"
-                    >
-                      PR Zone
-                    </motion.div>
-                  )}
                   <button
                     onClick={() => {
                       setWeight((w) =>
-                        Math.max(0, (parseFloat(w) || 0) - 2.5).toString()
+                        Math.max(0, (parseFloat(w) || 0) - 2.5).toString(),
                       );
                       triggerHaptic();
                     }}
-                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                    className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
-                    <Minus size={20} />
+                    <Minus size={16} />
                   </button>
                   <div className="text-center">
                     <input
@@ -554,10 +510,10 @@ function WorkoutApp() {
                       onChange={(e) =>
                         setWeight(e.target.value.replace(/[^0-9.]/g, ""))
                       }
-                      className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                      className="bg-transparent text-2xl font-black w-20 text-center outline-none"
                     />
-                    <span className="block text-[8px] font-black text-zinc-600 uppercase tracking-widest">
-                      KG
+                    <span className="block text-[7px] font-black text-zinc-600 uppercase">
+                      Weight KG
                     </span>
                   </div>
                   <button
@@ -565,22 +521,22 @@ function WorkoutApp() {
                       setWeight((w) => ((parseFloat(w) || 0) + 2.5).toString());
                       triggerHaptic();
                     }}
-                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                    className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
-                    <Plus size={20} />
+                    <Plus size={16} />
                   </button>
                 </div>
-                <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-zinc-800">
+                <div className="flex justify-between items-center bg-black/40 p-3 rounded-[2rem] border border-zinc-800">
                   <button
                     onClick={() => {
                       setReps((r) =>
-                        Math.max(0, (parseInt(r) || 0) - 1).toString()
+                        Math.max(0, (parseInt(r) || 0) - 1).toString(),
                       );
                       triggerHaptic();
                     }}
-                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                    className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
-                    <Minus size={20} />
+                    <Minus size={16} />
                   </button>
                   <div className="text-center">
                     <input
@@ -590,9 +546,9 @@ function WorkoutApp() {
                       onChange={(e) =>
                         setReps(e.target.value.replace(/[^0-9]/g, ""))
                       }
-                      className="bg-transparent text-white text-3xl font-black w-24 text-center outline-none tabular-nums"
+                      className="bg-transparent text-2xl font-black w-20 text-center outline-none"
                     />
-                    <span className="block text-[8px] font-black text-zinc-600 uppercase tracking-widest">
+                    <span className="block text-[7px] font-black text-zinc-600 uppercase">
                       Reps
                     </span>
                   </div>
@@ -601,19 +557,19 @@ function WorkoutApp() {
                       setReps((r) => ((parseInt(r) || 0) + 1).toString());
                       triggerHaptic();
                     }}
-                    className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
+                    className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
-                    <Plus size={20} />
+                    <Plus size={16} />
                   </button>
                 </div>
               </div>
             </motion.div>
           ) : (
             <div className="text-center py-20 opacity-20 flex flex-col items-center">
-              <Flame size={48} />
-              <span className="text-xs font-black mt-4 italic uppercase">
-                Rest Day
-              </span>
+              <Flame size={40} />
+              <p className="text-[10px] font-black mt-2 uppercase">
+                System Idle
+              </p>
             </div>
           )}
         </motion.div>
@@ -621,11 +577,11 @@ function WorkoutApp() {
 
       {view === "stats" && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm"
         >
-          <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">
+          <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-1">
             The Lab
           </h2>
           <InfiniteCalendar
@@ -635,67 +591,39 @@ function WorkoutApp() {
               triggerHaptic();
             }}
           />
-
-          <div className="mt-8 bg-zinc-900 border border-zinc-800 p-6 rounded-[2.5rem]">
-            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">
-              Last Session Overview
-            </h3>
-            {lastSessionData ? (
-              <div className="space-y-3">
-                {lastSessionData.map((l, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center bg-black/40 p-3 rounded-2xl border border-zinc-800/50"
-                  >
-                    <span className="text-[10px] font-black uppercase italic">
-                      {l.name}
-                    </span>
-                    <span className="text-[10px] text-orange-500 font-bold">
-                      {l.weight}kg x {l.reps}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-zinc-700 italic text-center py-4">
-                No data recorded yet.
-              </p>
-            )}
-          </div>
-
-          {/* POWER USER UTILITIES */}
           <div className="mt-6 flex gap-3">
             <button
-              onClick={handleExport}
-              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 active:bg-zinc-800"
+              onClick={() => {
+                const data = JSON.stringify({ history, routines }, null, 2);
+                const blob = new Blob([data], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `skipgym-backup.json`;
+                a.click();
+              }}
+              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase text-zinc-500"
             >
               <Download size={14} /> Export
             </button>
             <button
-              onClick={() => {
-                if (window.confirm("Master Reset: Clear all data?")) {
-                  triggerHaptic([100, 50, 100]);
-                  clearAllData();
-                }
-              }}
-              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-900 active:bg-red-500/10"
+              onClick={() =>
+                window.confirm("Clear all device data?") && clearAllData()
+              }
+              className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase text-red-900"
             >
-              <Trash2 size={14} /> Wipe All
+              <Trash2 size={14} /> Wipe
             </button>
           </div>
-
-          <div className="mt-16 pb-8 text-center opacity-20">
-            <p className="text-[8px] font-black uppercase tracking-[0.4em]">
-              Property of SKIPGYM
-            </p>
-            <p className="text-[7px] font-bold uppercase tracking-widest mt-1">
-              Built for the 1% by AZUKA— 2026
+          <div className="mt-12 text-center opacity-10">
+            <p className="text-[7px] font-black uppercase tracking-[0.4em]">
+              Built for the 1% by AZUKA
             </p>
           </div>
         </motion.div>
       )}
 
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-12 z-[100] bg-zinc-900/90 backdrop-blur-xl px-12 py-5 rounded-[2.5rem] border border-zinc-800">
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-12 z-[100] bg-zinc-900/90 backdrop-blur-xl px-12 py-4 rounded-full border border-zinc-800">
         <button
           onClick={() => {
             setView("train");
@@ -703,7 +631,7 @@ function WorkoutApp() {
           }}
           className={view === "train" ? "text-orange-500" : "text-zinc-600"}
         >
-          <Dumbbell size={24} />
+          <Dumbbell size={20} />
         </button>
         <button
           onClick={() => {
@@ -712,7 +640,7 @@ function WorkoutApp() {
           }}
           className={view === "stats" ? "text-orange-500" : "text-zinc-600"}
         >
-          <Calendar size={24} />
+          <Calendar size={20} />
         </button>
       </nav>
     </div>

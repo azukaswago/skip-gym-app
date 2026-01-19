@@ -1,42 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { X, Trash2, Save, Plus } from "lucide-react";
 import { motion } from "framer-motion";
-import { Plus, X, Check, Trash2 } from "lucide-react";
 
-const POPULAR_EXERCISES = [
-  "Bench Press",
-  "Incline Bench",
-  "Dumbbell Flyes",
-  "Pushups",
-  "Squat",
-  "Leg Press",
-  "Leg Extension",
-  "Leg Curl",
-  "Deadlift",
-  "Pull Ups",
-  "Lat Pulldown",
-  "Bent Over Row",
-  "Overhead Press",
-  "Lateral Raise",
-  "Front Raise",
-  "Shrugs",
-  "Bicep Curl",
-  "Hammer Curl",
-  "Tricep Pushdown",
-  "Skullcrushers",
-  "Plank",
-  "Leg Raises",
-  "Dips",
-  "Face Pulls",
-];
+const CreatorScreen = ({ onSave, onCancel, routines }) => {
+  const [day, setDay] = useState("MONDAY");
+  const [exercises, setExercises] = useState([]);
 
-const CreatorScreen = ({ onSave, onCancel }) => {
-  const [selectedDay, setSelectedDay] = useState("MONDAY");
-  const [routineName, setRoutineName] = useState("");
-  const [exercises, setExercises] = useState([
-    { id: Date.now().toString(), name: "", weight: "", reps: "8", sets: "3" },
-  ]);
+  // Load existing data when switching days
+  useEffect(() => {
+    if (routines[day]) {
+      setExercises(routines[day].exercises || []);
+    } else {
+      setExercises([]);
+    }
+  }, [day, routines]);
 
-  const days = [
+  const addEx = () => {
+    setExercises([
+      ...exercises,
+      { id: Date.now(), name: "", sets: 3, weight: "", reps: "" },
+    ]);
+  };
+
+  const updateEx = (id, field, val) => {
+    setExercises(
+      exercises.map((ex) => (ex.id === id ? { ...ex, [field]: val } : ex)),
+    );
+  };
+
+  const removeEx = (id) => setExercises(exercises.filter((ex) => ex.id !== id));
+
+  const weekProgress = [
     "MONDAY",
     "TUESDAY",
     "WEDNESDAY",
@@ -44,176 +38,134 @@ const CreatorScreen = ({ onSave, onCancel }) => {
     "FRIDAY",
     "SATURDAY",
     "SUNDAY",
-  ];
-
-  const addExercise = () => {
-    setExercises([
-      ...exercises,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        name: "",
-        weight: "",
-        reps: "8",
-        sets: "3",
-      },
-    ]);
-  };
-
-  const updateExercise = (id, field, value) => {
-    setExercises(
-      exercises.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex))
-    );
-  };
-
-  const removeExercise = (id) => {
-    if (exercises.length > 1)
-      setExercises(exercises.filter((ex) => ex.id !== id));
-  };
+  ].map((d) => ({
+    name: d,
+    exists: !!routines[d],
+    count: routines[d]?.exercises?.length || 0,
+  }));
 
   return (
     <motion.div
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      className="fixed inset-0 bg-black z-[300] p-6 overflow-y-auto pb-32"
+      className="fixed inset-0 z-[1000] bg-black overflow-y-auto pb-40 p-6"
     >
-      <header className="flex justify-between items-center mb-8 sticky top-0 bg-black/95 py-4 z-50">
-        <button onClick={onCancel} className="text-zinc-500">
-          <X size={28} />
-        </button>
-        <h2 className="text-xl font-black italic uppercase text-orange-500">
-          Creator
-        </h2>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">
+            Architect
+          </h2>
+          <p className="text-[8px] text-zinc-600 font-bold tracking-widest uppercase">
+            Routine Builder
+          </p>
+        </div>
         <button
-          onClick={() =>
-            onSave({ day: selectedDay, name: routineName, exercises })
-          }
-          className="bg-orange-500 text-black p-2 rounded-full shadow-lg shadow-orange-500/20"
+          onClick={onCancel}
+          className="p-2 bg-zinc-900 rounded-full border border-zinc-800 text-zinc-400"
         >
-          <Check size={24} />
+          <X size={18} />
         </button>
-      </header>
+      </div>
 
-      <div className="max-w-sm mx-auto space-y-8">
-        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-          {days.map((day) => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black shrink-0 transition-all ${
-                selectedDay === day
-                  ? "bg-orange-500 text-black"
-                  : "bg-zinc-900 text-zinc-600"
-              }`}
+      {/* WEEK STATUS GRID */}
+      <div className="mb-8 grid grid-cols-4 gap-2">
+        {weekProgress.map((d) => (
+          <div
+            key={d.name}
+            className={`p-2 rounded-xl border flex flex-col items-center justify-center ${d.exists ? "border-orange-500/40 bg-orange-500/5" : "border-zinc-800 bg-zinc-900/20"}`}
+          >
+            <span
+              className={`text-[7px] font-black ${d.exists ? "text-orange-500" : "text-zinc-600"}`}
             >
-              {day}
+              {d.name.slice(0, 3)}
+            </span>
+            <span className="text-[9px] font-bold mt-0.5 text-zinc-400">
+              {d.count}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-6">
+        {/* DAY SELECTOR */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+          {weekProgress.map((d) => (
+            <button
+              key={d.name}
+              onClick={() => setDay(d.name)}
+              className={`px-4 py-2.5 rounded-xl text-[9px] font-black border shrink-0 transition-all ${day === d.name ? "bg-white text-black border-white" : "bg-zinc-900 text-zinc-500 border-zinc-800"}`}
+            >
+              {d.name}
             </button>
           ))}
         </div>
 
-        <input
-          type="text"
-          placeholder="ROUTINE NAME (e.g. PUSH DAY)"
-          value={routineName}
-          onChange={(e) => setRoutineName(e.target.value)}
-          className="bg-transparent text-3xl font-black uppercase italic w-full outline-none border-b-2 border-zinc-900 focus:border-orange-500 pb-2 placeholder:text-zinc-800"
-        />
-
+        {/* EXERCISE LIST */}
         <div className="space-y-4">
-          {exercises.map((ex) => (
+          {exercises.map((ex, idx) => (
             <div
               key={ex.id}
-              className="bg-zinc-900/50 p-6 rounded-[2.5rem] border border-zinc-800 relative group"
+              className="bg-zinc-900 border border-zinc-800 p-4 rounded-[1.5rem] space-y-4"
             >
-              <button
-                onClick={() => removeExercise(ex.id)}
-                className="absolute top-6 right-6 text-zinc-700 hover:text-red-500"
-              >
-                <Trash2 size={16} />
-              </button>
-
-              <div className="relative mb-6">
-                <input
-                  placeholder="EXERCISE NAME"
-                  value={ex.name}
-                  onChange={(e) =>
-                    updateExercise(ex.id, "name", e.target.value)
-                  }
-                  className="bg-transparent text-xl font-bold uppercase w-full outline-none border-b border-zinc-800/50 pb-2 focus:border-orange-500/50 transition-colors"
-                />
-
-                {/* AUTO-SUGGEST CHIPS */}
-                {ex.name.length > 0 && !POPULAR_EXERCISES.includes(ex.name) && (
-                  <div className="flex flex-wrap gap-2 mt-3 animate-in fade-in slide-in-from-top-1">
-                    {POPULAR_EXERCISES.filter((item) =>
-                      item.toLowerCase().includes(ex.name.toLowerCase())
-                    )
-                      .slice(0, 3)
-                      .map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          onClick={() =>
-                            updateExercise(ex.id, "name", suggestion)
-                          }
-                          className="text-[9px] font-black bg-zinc-800 text-orange-500 px-3 py-1 rounded-full border border-orange-500/30 active:scale-90"
-                        >
-                          + {suggestion}
-                        </button>
-                      ))}
-                  </div>
-                )}
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] font-black text-zinc-700 uppercase">
+                  #0{idx + 1}
+                </span>
+                <button
+                  onClick={() => removeEx(ex.id)}
+                  className="text-red-900 p-1"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-black/40 p-3 rounded-xl border border-zinc-800 text-center">
-                  <span className="text-[8px] text-zinc-600 font-black uppercase block mb-1">
-                    Target Kg
-                  </span>
-                  <input
-                    type="number"
-                    value={ex.weight}
-                    onChange={(e) =>
-                      updateExercise(ex.id, "weight", e.target.value)
-                    }
-                    className="bg-transparent w-full font-black text-sm outline-none text-center"
-                  />
-                </div>
-                <div className="bg-black/40 p-3 rounded-xl border border-zinc-800 text-center">
-                  <span className="text-[8px] text-zinc-600 font-black uppercase block mb-1">
-                    Reps
-                  </span>
-                  <input
-                    type="number"
-                    value={ex.reps}
-                    onChange={(e) =>
-                      updateExercise(ex.id, "reps", e.target.value)
-                    }
-                    className="bg-transparent w-full font-black text-sm outline-none text-center"
-                  />
-                </div>
-                <div className="bg-black/40 p-3 rounded-xl border border-zinc-800 text-center">
-                  <span className="text-[8px] text-zinc-600 font-black uppercase block mb-1">
-                    Sets
-                  </span>
-                  <input
-                    type="number"
-                    value={ex.sets}
-                    onChange={(e) =>
-                      updateExercise(ex.id, "sets", e.target.value)
-                    }
-                    className="bg-transparent w-full font-black text-sm outline-none text-center"
-                  />
-                </div>
+              <input
+                placeholder="EXERCISE NAME"
+                value={ex.name}
+                onChange={(e) =>
+                  updateEx(ex.id, "name", e.target.value.toUpperCase())
+                }
+                className="bg-transparent text-white text-lg font-black italic w-full outline-none border-b border-zinc-800 pb-1 placeholder:text-zinc-800"
+              />
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Sets", field: "sets", ph: "3" },
+                  { label: "Weight", field: "weight", ph: "40" },
+                  { label: "Reps", field: "reps", ph: "10" },
+                ].map((f) => (
+                  <div key={f.field}>
+                    <label className="text-[7px] font-black text-zinc-600 uppercase mb-1 block">
+                      {f.label}
+                    </label>
+                    <input
+                      type="number"
+                      placeholder={f.ph}
+                      value={ex[f.field]}
+                      onChange={(e) => updateEx(ex.id, f.field, e.target.value)}
+                      className="bg-zinc-800 text-white w-full p-2.5 rounded-lg text-[10px] font-bold outline-none"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           ))}
-        </div>
 
+          <button
+            onClick={addEx}
+            className="w-full py-4 border-2 border-dashed border-zinc-900 rounded-2xl text-[8px] font-black uppercase text-zinc-700 hover:text-orange-500 hover:border-orange-500 transition-all"
+          >
+            + Add Exercise to {day}
+          </button>
+        </div>
+      </div>
+
+      {/* SAVE BUTTON */}
+      <div className="fixed bottom-8 left-6 right-6">
         <button
-          onClick={addExercise}
-          className="w-full py-8 rounded-[2.5rem] border-2 border-dashed border-zinc-800 text-zinc-700 font-black flex items-center justify-center gap-2 hover:border-orange-500/50 hover:text-orange-500 transition-all"
+          onClick={() => onSave({ day, exercises })}
+          className="w-full bg-orange-500 text-black py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-2"
         >
-          <Plus size={20} /> ADD MOVEMENT
+          <Save size={14} /> Save {day} Routine
         </button>
       </div>
     </motion.div>
