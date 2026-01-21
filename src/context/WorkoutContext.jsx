@@ -3,55 +3,54 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const WorkoutContext = createContext();
 
 export const WorkoutProvider = ({ children }) => {
-  const [routines, setRoutines] = useState(() => {
-    const saved = localStorage.getItem("skip-gym-routines");
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [history, setHistory] = useState(() => {
-    const saved = localStorage.getItem("skip-gym-history");
-    return saved ? JSON.parse(saved) : {};
-  });
-
+  const [routines, setRoutines] = useState({});
+  const [history, setHistory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    localStorage.setItem("skip-gym-routines", JSON.stringify(routines));
-    localStorage.setItem("skip-gym-history", JSON.stringify(history));
-  }, [routines, history]);
+  // Access the Telegram WebApp Object
+  const tg = window.Telegram?.WebApp;
 
-  const saveRoutine = (day, routine) => {
-    setRoutines((prev) => ({ ...prev, [day.toUpperCase()]: routine }));
+  useEffect(() => {
+    if (tg) {
+      tg.ready();
+      tg.expand(); // Opens the app to full height
+
+      // Pull data from Telegram Cloud
+      tg.CloudStorage.getItems(["routines", "history"], (err, values) => {
+        if (!err) {
+          if (values.routines) setRoutines(JSON.parse(values.routines));
+          if (values.history) setHistory(JSON.parse(values.history));
+        }
+      });
+    }
+  }, []);
+
+  const saveRoutine = (day, routineData) => {
+    const newRoutines = { ...routines, [day]: routineData };
+    setRoutines(newRoutines);
+    tg?.CloudStorage.setItem("routines", JSON.stringify(newRoutines));
+    tg?.HapticFeedback.notificationOccurred("success");
   };
 
   const recordSet = (id, weight, reps, name) => {
-    const entryId = `${id}-${Date.now()}`;
-    setHistory((prev) => ({
-      ...prev,
-      [entryId]: {
-        id,
-        name,
-        weight: parseFloat(weight),
-        reps: parseInt(reps),
-        date: new Date().toISOString(),
-      },
-    }));
-  };
-
-  const getIsPR = (exerciseName, weight) => {
-    const weightNum = parseFloat(weight);
-    const prev = Object.values(history).filter((h) => h.name === exerciseName);
-    if (prev.length === 0) return false;
-    return weightNum > Math.max(...prev.map((h) => h.weight || 0));
+    const entry = {
+      id: crypto.randomUUID(), // Unique ID for every log
+      exerciseId: id,
+      name: name.toUpperCase(),
+      weight,
+      reps,
+      date: new Date().toISOString(),
+    };
+    const newHistory = [...history, entry];
+    setHistory(newHistory);
+    tg?.CloudStorage.setItem("history", JSON.stringify(newHistory));
   };
 
   const clearAllData = () => {
-    if (window.confirm("Wipe all data?")) {
-      setRoutines({});
-      setHistory({});
-      localStorage.clear();
-      window.location.reload();
-    }
+    setRoutines({});
+    setHistory([]);
+    tg?.CloudStorage.removeItems(["routines", "history"]);
+    tg?.HapticFeedback.notificationOccurred("warning");
   };
 
   return (
@@ -64,7 +63,6 @@ export const WorkoutProvider = ({ children }) => {
         saveRoutine,
         recordSet,
         clearAllData,
-        getIsPR,
       }}
     >
       {children}

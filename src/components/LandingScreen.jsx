@@ -1,6 +1,13 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, Smartphone, ChevronRight, Download } from "lucide-react";
+import {
+  Shield,
+  Zap,
+  Smartphone,
+  ChevronRight,
+  Download,
+  Send,
+} from "lucide-react";
 
 const LandingScreen = ({ onGetStarted }) => {
   return (
@@ -21,16 +28,16 @@ const LandingScreen = ({ onGetStarted }) => {
           transition={{ delay: 0.1 }}
           className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-2"
         >
-          Built for the 1%. Zero BS.
+          Built for the 1%. Telegram Powered.
         </motion.p>
       </header>
 
       <div className="space-y-8">
         {[
           {
-            icon: <Shield size={20} />,
-            title: "100% Private",
-            desc: "Data stays on your device. No cloud. No tracking.",
+            icon: <Send size={20} />,
+            title: "Telegram Cloud",
+            desc: "Your data syncs with your Telegram account. Secure & permanent.",
           },
           {
             icon: <Zap size={20} />,
@@ -73,10 +80,10 @@ const LandingScreen = ({ onGetStarted }) => {
           onClick={onGetStarted}
           className="w-full bg-white text-black py-6 rounded-[2rem] font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
-          Start Training <ChevronRight size={16} />
+          Open Protocol <ChevronRight size={16} />
         </button>
         <p className="text-center text-[8px] text-zinc-700 font-black uppercase tracking-widest">
-          Version 1.0 — Free Forever
+          v1.1 — Telegram Mini App
         </p>
       </motion.div>
     </div>

@@ -18,6 +18,9 @@ import {
   Download,
 } from "lucide-react";
 
+// Telegram WebApp Object
+const tg = window.Telegram?.WebApp;
+
 const getDStr = (date) => {
   if (!date) return "";
   const d = new Date(date);
@@ -30,7 +33,7 @@ const Onboarding = ({ onComplete }) => {
   const slides = [
     {
       title: "THE LAB",
-      desc: "Deep-dive into your training history. Your data is sovereign and stored locally.",
+      desc: "Deep-dive into your training history. Your data is sovereign and synced to Telegram Cloud.",
       icon: <Calendar size={32} className="text-orange-500" />,
     },
     {
@@ -40,7 +43,7 @@ const Onboarding = ({ onComplete }) => {
     },
     {
       title: "ZERO FOOTPRINT",
-      desc: "No accounts. No tracking. Complete data ownership.",
+      desc: "No accounts. No ads. Complete data ownership.",
       icon: <Trash2 size={32} className="text-red-500" />,
     },
   ];
@@ -79,9 +82,10 @@ const Onboarding = ({ onComplete }) => {
         </motion.div>
       </div>
       <button
-        onClick={() =>
-          step < slides.length - 1 ? setStep(step + 1) : onComplete()
-        }
+        onClick={() => {
+          tg?.HapticFeedback.impactOccurred("light");
+          step < slides.length - 1 ? setStep(step + 1) : onComplete();
+        }}
         className="w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl flex items-center justify-center gap-2"
       >
         {step === slides.length - 1 ? "Initialize Lab" : "Next"}{" "}
@@ -174,7 +178,9 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
     const target = getDStr(
       new Date(viewDate.getFullYear(), viewDate.getMonth(), day),
     );
-    return Object.values(history).some((h) => getDStr(h.date) === target);
+    return Array.isArray(history)
+      ? history.some((h) => getDStr(h.date) === target)
+      : false;
   };
 
   return (
@@ -197,7 +203,10 @@ const InfiniteCalendar = ({ history, onDateSelect }) => {
           {months.map((m, i) => (
             <button
               key={m}
-              onClick={() => setViewDate(new Date(viewDate.getFullYear(), i))}
+              onClick={() => {
+                tg?.HapticFeedback.impactOccurred("light");
+                setViewDate(new Date(viewDate.getFullYear(), i));
+              }}
               className={`text-[8px] font-black px-1.5 py-1 rounded transition-all ${viewDate.getMonth() === i ? "bg-white text-black" : "text-zinc-600"}`}
             >
               {m}
@@ -253,6 +262,7 @@ function WorkoutApp() {
     recordSet,
     clearAllData,
   } = useWorkout();
+
   const [showLanding, setShowLanding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [view, setView] = useState("train");
@@ -278,14 +288,14 @@ function WorkoutApp() {
   const routine = routines[selectedDay.toUpperCase()];
   const exercise = routine?.exercises?.[currentIndex];
 
-  const triggerHaptic = (pattern = [30]) => {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  };
-
+  // FIX: FUZZY HISTORY MATCHING
   const exHistory = useMemo(() => {
     if (!exercise?.name) return [];
-    return Object.values(history)
-      .filter((h) => h.name === exercise.name)
+    return history
+      .filter(
+        (h) =>
+          h.name?.trim().toUpperCase() === exercise.name?.trim().toUpperCase(),
+      )
       .sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [exercise, history]);
 
@@ -310,14 +320,16 @@ function WorkoutApp() {
       t = setInterval(() => setTimeLeft((p) => p - 1), 1000);
     else if (timeLeft <= 0 && isResting) {
       setIsResting(false);
-      triggerHaptic([100, 50, 100]);
+      tg?.HapticFeedback.notificationOccurred("success");
     }
     return () => clearInterval(t);
   }, [isResting, timeLeft]);
 
   const handleNext = () => {
-    triggerHaptic([40, 30]);
+    tg?.HapticFeedback.impactOccurred("medium");
+
     if (exercise) recordSet(exercise.id, weight, reps, exercise.name);
+
     const total = parseInt(exercise?.sets) || 3;
     if (activeSet < total) {
       setActiveSet((p) => p + 1);
@@ -327,12 +339,17 @@ function WorkoutApp() {
       }
     } else if (currentIndex < (routine?.exercises?.length || 0) - 1) {
       setCurrentIndex((p) => p + 1);
+      setActiveSet(1);
       if (rest > 0) {
         setTimeLeft(rest);
         setIsResting(true);
       }
     } else {
-      alert("System Status: Session Complete");
+      tg?.showPopup({
+        title: "PROTOCOL COMPLETE",
+        message: "System Log: Session saved to Cloud.",
+        buttons: [{ type: "ok", text: "Dismiss", color: "#f97316" }],
+      });
       setCurrentIndex(0);
       setActiveSet(1);
     }
@@ -361,12 +378,8 @@ function WorkoutApp() {
         {selectedCalDate && (
           <DayDetailModal
             date={selectedCalDate}
-            logs={useMemo(
-              () =>
-                Object.values(history).filter(
-                  (h) => getDStr(h.date) === getDStr(selectedCalDate),
-                ),
-              [selectedCalDate, history],
+            logs={history.filter(
+              (h) => getDStr(h.date) === getDStr(selectedCalDate),
             )}
             onClose={() => setSelectedCalDate(null)}
           />
@@ -404,28 +417,31 @@ function WorkoutApp() {
         )}
       </AnimatePresence>
 
-      {/* NON-STICKY HEADER */}
       <header className="mb-6 w-full max-w-sm flex justify-between items-center relative z-10">
         <h1 className="text-2xl font-black italic tracking-tighter">
           SKIP<span className="text-orange-500">GYM</span>
         </h1>
         <div className="flex gap-2">
           <button
-            onClick={() =>
+            onClick={() => {
+              tg?.HapticFeedback.impactOccurred("light");
               setRest(
                 (r) => [60, 90, 120, 0][([60, 90, 120, 0].indexOf(r) + 1) % 4],
-              )
-            }
+              );
+            }}
             className="w-14 h-9 bg-zinc-900 rounded-full flex items-center justify-center gap-1 border border-zinc-800 text-[8px] font-black"
           >
             <Timer
               size={12}
               className={rest > 0 ? "text-orange-500" : "text-zinc-600"}
-            />{" "}
+            />
             {rest > 0 ? `${rest}s` : "OFF"}
           </button>
           <button
-            onClick={() => setView("create")}
+            onClick={() => {
+              tg?.HapticFeedback.impactOccurred("medium");
+              setView("create");
+            }}
             className="w-9 h-9 bg-orange-500 text-black rounded-full flex items-center justify-center"
           >
             <Plus size={18} />
@@ -439,7 +455,6 @@ function WorkoutApp() {
           animate={{ opacity: 1 }}
           className="w-full max-w-sm"
         >
-          {/* DAY PICKER */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 py-1">
             {days.map((d) => (
               <button
@@ -447,7 +462,7 @@ function WorkoutApp() {
                 onClick={() => {
                   setSelectedDay(d.toUpperCase());
                   setCurrentIndex(0);
-                  triggerHaptic();
+                  tg?.HapticFeedback.impactOccurred("light");
                 }}
                 className={`px-3 py-2 rounded-xl text-[9px] font-black border shrink-0 transition-all ${selectedDay === d.toUpperCase() ? "bg-white text-black border-white" : "bg-zinc-900 text-zinc-600 border-zinc-800"}`}
               >
@@ -496,7 +511,7 @@ function WorkoutApp() {
                       setWeight((w) =>
                         Math.max(0, (parseFloat(w) || 0) - 2.5).toString(),
                       );
-                      triggerHaptic();
+                      tg?.HapticFeedback.impactOccurred("light");
                     }}
                     className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
@@ -519,7 +534,7 @@ function WorkoutApp() {
                   <button
                     onClick={() => {
                       setWeight((w) => ((parseFloat(w) || 0) + 2.5).toString());
-                      triggerHaptic();
+                      tg?.HapticFeedback.impactOccurred("light");
                     }}
                     className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
@@ -532,7 +547,7 @@ function WorkoutApp() {
                       setReps((r) =>
                         Math.max(0, (parseInt(r) || 0) - 1).toString(),
                       );
-                      triggerHaptic();
+                      tg?.HapticFeedback.impactOccurred("light");
                     }}
                     className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
@@ -555,7 +570,7 @@ function WorkoutApp() {
                   <button
                     onClick={() => {
                       setReps((r) => ((parseInt(r) || 0) + 1).toString());
-                      triggerHaptic();
+                      tg?.HapticFeedback.impactOccurred("light");
                     }}
                     className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center active:bg-orange-500"
                   >
@@ -588,7 +603,7 @@ function WorkoutApp() {
             history={history}
             onDateSelect={(d) => {
               setSelectedCalDate(d);
-              triggerHaptic();
+              tg?.HapticFeedback.impactOccurred("medium");
             }}
           />
           <div className="mt-6 flex gap-3">
@@ -607,9 +622,11 @@ function WorkoutApp() {
               <Download size={14} /> Export
             </button>
             <button
-              onClick={() =>
-                window.confirm("Clear all device data?") && clearAllData()
-              }
+              onClick={() => {
+                tg?.showConfirm("Wipe all data from Cloud?", (ok) => {
+                  if (ok) clearAllData();
+                });
+              }}
               className="flex-1 bg-zinc-900 border border-zinc-800 py-4 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase text-red-900"
             >
               <Trash2 size={14} /> Wipe
@@ -627,7 +644,7 @@ function WorkoutApp() {
         <button
           onClick={() => {
             setView("train");
-            triggerHaptic();
+            tg?.HapticFeedback.impactOccurred("light");
           }}
           className={view === "train" ? "text-orange-500" : "text-zinc-600"}
         >
@@ -636,7 +653,7 @@ function WorkoutApp() {
         <button
           onClick={() => {
             setView("stats");
-            triggerHaptic();
+            tg?.HapticFeedback.impactOccurred("light");
           }}
           className={view === "stats" ? "text-orange-500" : "text-zinc-600"}
         >
