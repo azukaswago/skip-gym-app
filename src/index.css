@@ -2,7 +2,6 @@
 
 @theme {
   --animate-heat: heat 2s infinite ease-in-out;
-
   @keyframes heat {
     0%,
     100% {
@@ -16,9 +15,29 @@
   }
 }
 
-/* Base styles to make it look like a pro app immediately */
 body {
   @apply bg-black text-white antialiased;
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  padding: 0;
+  /* Use system fonts to speed up load time */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  overflow: hidden;
+}
+
+/* Ensure React root fills the container correctly */
+#root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scannability fix for lists */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

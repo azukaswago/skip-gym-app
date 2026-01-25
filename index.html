@@ -4,13 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo192.png" />
     <link rel="apple-touch-icon" href="/logo192.png" />
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      // 2. Immediate Handshake
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      }
+    </script>
 
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -22,14 +29,22 @@
     <title>SKIPGYM</title>
 
     <style>
+      /* 3. Fix the "Disappearing" Height Bug */
+      :root {
+        --tg-viewport-height: 100vh;
+      }
       body {
         background-color: #000000;
         margin: 0;
         padding: 0;
+        overflow: hidden; /* Prevents ghost scrolling */
+        height: 100vh;
+        width: 100vw;
       }
       #root {
         background-color: #000000;
-        min-height: 100vh;
+        height: var(--tg-viewport-height);
+        overflow-y: auto;
       }
     </style>
   </head>
